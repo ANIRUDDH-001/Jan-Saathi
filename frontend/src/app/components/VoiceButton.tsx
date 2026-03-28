@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mic } from 'lucide-react';
+import { Mic, Square, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface VoiceButtonProps {
@@ -90,24 +90,23 @@ export function VoiceButton({ state = 'default', size = 'md', onClick }: VoiceBu
 
       {/* Main Button */}
       <motion.button
-        onClick={onClick}
+        onClick={state === 'processing' ? undefined : onClick}
+        disabled={state === 'processing'}
         className={`relative ${button} rounded-full flex items-center justify-center transition-all shadow-2xl`}
         style={{
-          background: state === 'listening' 
+          background: state === 'listening'
             ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
-            : state === 'processing'
-            ? 'linear-gradient(135deg, #FF9933 0%, #e8882d 100%)'
             : 'linear-gradient(135deg, #FF9933 0%, #e8882d 100%)',
           boxShadow: state !== 'default'
             ? '0 20px 60px rgba(255, 153, 51, 0.5)'
-            : '0 10px 40px rgba(255, 153, 51, 0.3)'
+            : '0 10px 40px rgba(255, 153, 51, 0.3)',
         }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        animate={state === 'processing' ? { rotate: 360 } : {}}
-        transition={state === 'processing' ? { duration: 1, repeat: Infinity, ease: "linear" } : {}}
+        whileHover={state !== 'processing' ? { scale: 1.05 } : {}}
+        whileTap={state !== 'processing' ? { scale: 0.95 } : {}}
       >
-        <Mic className={`${icon} text-white`} />
+        {state === 'listening' && <Square className={`${icon} text-white fill-white`} />}
+        {state === 'processing' && <Loader2 className={`${icon} text-white animate-spin`} />}
+        {state === 'default' && <Mic className={`${icon} text-white`} />}
       </motion.button>
 
       {/* Pulse effect for listening state */}

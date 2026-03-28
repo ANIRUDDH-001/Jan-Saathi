@@ -1,29 +1,33 @@
 """Voice router — STT and TTS endpoints."""
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
-from app.models import VoiceResponse
+from fastapi import APIRouter, UploadFile, File, Form
 from app.services import sarvam
 
 router = APIRouter()
 
-@router.post("/transcribe", response_model=VoiceResponse)
+
+@router.post("/transcribe")
 async def transcribe_audio(
     audio: UploadFile = File(...),
-    language_hint: str = Form("hi-IN"),
-    session_id: str = Form(...)
+    language_hint: str = Form(default="hi-IN"),
+    session_id: str = Form(default=""),
 ):
     """Transcribe farmer's speech using Saaras v3."""
     audio_bytes = await audio.read()
     if len(audio_bytes) < 100:
-        raise HTTPException(status_code=400, detail="Audio too short")
-    
-    result = await sarvam.transcribe(audio_bytes, language_hint)
-    return VoiceResponse(**result)
+        return {
+            "transcript": "", "language_code": language_hint,
+            "language_short": "hi", "error": "audio_too_short",
+        }
+
+    result = await sarvam.transcribe(audio_bytes, language_hint, session_id)
+    return result
+
 
 @router.post("/speak")
 async def synthesize_speech(text: str, language: str = "hi-IN"):
     """Convert text to speech using Bulbul v3."""
-    try:
-        audio_b64 = await sarvam.text_to_speech(text, language)
-        return {"audio_b64": audio_b64, "language": language}
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=f"TTS service error: {str(e)}")
+    if not text.strip():
+        return {"audio_b64": "", "error": "empty_text"}
+
+    audio_b64 = await sarvam.text_to_speech(text, language)
+    return {"audio_b64": audio_b64}

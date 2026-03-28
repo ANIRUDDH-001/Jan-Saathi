@@ -31,7 +31,7 @@ export async function detectLocation(): Promise<{ state: string|null; city: stri
 // ── Voice ─────────────────────────────────────────────────────────────────────
 export async function transcribeAudio(
   blob: Blob, sessionId: string, langHint = 'hi-IN'
-): Promise<{ transcript: string; language_code: string; language_short: string }> {
+): Promise<{ transcript: string; language_code: string; language_short: string; error?: string }> {
   const form = new FormData();
   form.append('audio', blob, 'rec.webm');
   form.append('session_id', sessionId);

@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { useLang } from '../context/LanguageContext';
 import { useApp } from '../context/AppContext';
-import { mockSchemes, botResponses } from '../utils/mockData';
+import { mockSchemes } from '../utils/mockData';
 import { Send, Volume2 } from 'lucide-react';
 import { v4Fallback } from '../utils/uuid';
 import { ProfileCard } from '../components/ProfileCard';
@@ -17,20 +17,60 @@ import { ShubhAvatarSmall } from '../components/ShubhAvatar';
 import { motion, AnimatePresence } from 'motion/react';
 import { sendChatMessage, transcribeAudio } from '../services/api';
 
-async function playAudioB64(b64: string): Promise<void> {
+// Maps short language codes to Sarvam BCP-47 codes
+const LANG_TO_SARVAM: Record<string, string> = {
+  hi: 'hi-IN', bn: 'bn-IN', ta: 'ta-IN', te: 'te-IN',
+  gu: 'gu-IN', kn: 'kn-IN', ml: 'ml-IN', mr: 'mr-IN',
+  pa: 'pa-IN', od: 'or-IN', en: 'en-IN',
+};
+
+async function playAudioB64(
+  b64: string,
+  onStart?: () => void,
+  onEnd?: () => void,
+): Promise<void> {
   const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+
+  // Resume if suspended (browser autoplay policy)
+  if (ctx.state === 'suspended') {
+    await ctx.resume();
+  }
+
   const binary = atob(b64);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  const buffer = await ctx.decodeAudioData(bytes.buffer);
-  const src = ctx.createBufferSource();
-  src.buffer = buffer; src.connect(ctx.destination);
-  return new Promise(resolve => { src.onended = () => resolve(); src.start(); });
+
+  try {
+    const buffer = await ctx.decodeAudioData(bytes.buffer);
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.connect(ctx.destination);
+
+    return new Promise(resolve => {
+      src.onended = () => {
+        ctx.close();
+        onEnd?.();
+        resolve();
+      };
+      onStart?.();
+      src.start();
+    });
+  } catch (err) {
+    console.error('Audio decode failed:', err);
+    ctx.close();
+    onEnd?.();
+    // Non-fatal — swallow the error
+  }
 }
 
 export function Chat() {
   const { lang, t } = useLang();
-  const { profile, mergeProfile, chatState, setChatState, messages, addMessage, setSchemes, setGapValue, gapValue, isLoggedIn, sessionId, currentLanguage, setLanguage, setVoicePlaying, updateLastInputTime, lastInputTime, setActiveScheme, schemes } = useApp();
+  const {
+    profile, mergeProfile, chatState, setChatState, messages, addMessage,
+    setSchemes, setGapValue, gapValue, isLoggedIn, sessionId,
+    currentLanguage, setLanguage, setVoicePlaying, updateLastInputTime,
+    lastInputTime, setActiveScheme, schemes,
+  } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -49,20 +89,17 @@ export function Chat() {
   const [userHasSpoken, setUserHasSpoken] = useState(false);
   const mediaRef = useRef<MediaRecorder | null>(null);
 
+  // Audio graph refs for real waveform visualisation
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+
+  // Ref always pointing to latest handleSend — fixes stale-closure in run-once useEffect (F7)
+  const handleSendRef = useRef<((text?: string) => Promise<void>) | null>(null);
+
   // Progress bar step
   const progressStep = chatState === 'intake' ? 0 : chatState === 'match' ? 1 : 2;
   const profileProgress = [profile.state, profile.occupation, profile.age].filter(Boolean).length;
-
-  useEffect(() => {
-    if (messages.length === 0) {
-      addMessage({ id: v4Fallback(), role: 'bot', text: t('chat.first') });
-    }
-    const state = location.state as any;
-    if (state?.initialMessage) {
-      setTimeout(() => handleSend(state.initialMessage), 500);
-      window.history.replaceState({}, '');
-    }
-  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -86,7 +123,7 @@ export function Chat() {
       if (elapsed > THRESHOLD && chatState !== 'goodbye' && !silenceWarningFired) {
         setSilenceWarningFired(true);
         setShowGoodbye(true);
-        handleSend('bas');
+        handleSendRef.current?.('bas');
       }
     }, 1000);
 
@@ -95,20 +132,50 @@ export function Chat() {
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 16000,
+        },
+      });
+
+      // Set up AudioContext + AnalyserNode for real waveform data
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 64;
+      analyser.smoothingTimeConstant = 0.8;
+
+      const source = audioCtx.createMediaStreamSource(stream);
+      source.connect(analyser);
+
+      audioContextRef.current = audioCtx;
+      analyserRef.current = analyser;
+      sourceRef.current = source;
+
       const rec = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       const chunks: Blob[] = [];
-      rec.ondataavailable = e => chunks.push(e.data);
+
+      rec.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
       rec.onstop = async () => {
+        // Tear down audio graph
+        source.disconnect();
+        audioCtx.close();
+        audioContextRef.current = null;
+        analyserRef.current = null;
+        sourceRef.current = null;
+
         stream.getTracks().forEach(t => t.stop());
         const blob = new Blob(chunks, { type: 'audio/webm' });
         await processVoice(blob);
       };
-      rec.start();
+
+      rec.start(100); // Collect data every 100 ms
       mediaRef.current = rec;
       setVoiceState('listening');
       updateLastInputTime();
-    } catch {
+    } catch (err) {
+      console.error('Recording failed:', err);
       setVoiceState('default');
     }
   };
@@ -125,22 +192,35 @@ export function Chat() {
 
   const processVoice = async (blob: Blob) => {
     try {
-      const { transcript, language_short } = await transcribeAudio(
-        blob, sessionId, (currentLanguage === 'hi' ? 'hi-IN' : currentLanguage + '-IN')
-      );
-      if (language_short !== currentLanguage) {
+      const langHint = LANG_TO_SARVAM[currentLanguage] || 'hi-IN';
+      const { transcript, language_short, error } = await transcribeAudio(blob, sessionId, langHint);
+
+      if (error === 'audio_too_short' || !transcript?.trim()) {
+        setVoiceState('default');
+        return;
+      }
+
+      // Auto language switch when Saaras detects a different language
+      if (language_short && language_short !== currentLanguage) {
         setLanguage(language_short);
         setDetectedLang(language_short);
-        setTimeout(() => setDetectedLang(null), 3000);
+        setTimeout(() => setDetectedLang(null), 4000);
       }
+
       updateLastInputTime();
-      await handleSend(transcript);
-    } catch {
+      await handleSendRef.current?.(transcript);
+    } catch (err) {
+      console.error('Voice processing failed:', err);
+      addMessage({
+        id: v4Fallback(),
+        role: 'bot',
+        text: 'Awaaz sunne mein dikkat aayi. Phir try karein ya type karein.',
+      });
       setVoiceState('default');
     }
   };
 
-  const handleSend = async (text?: string) => {
+  const handleSend = useCallback(async (text?: string) => {
     const msg = text || input;
     if (!msg.trim()) return;
     setInput('');
@@ -157,8 +237,7 @@ export function Chat() {
 
     try {
       const resp = await sendChatMessage(msg, sessionId, currentLanguage);
-      
-      // Update app state from response
+
       setChatState(resp.state);
       mergeProfile(resp.profile);
       if (resp.schemes?.length) setSchemes(resp.schemes);
@@ -166,26 +245,23 @@ export function Chat() {
 
       addMessage({ id: v4Fallback(), role: 'bot', text: resp.reply, audioB64: resp.audio_b64 });
 
-      // Show save prompt when moving to match state (approximate, since we don't have exact old/new state comparison here)
       if (resp.state === 'match' && chatState !== 'match') {
-         setShowSavePrompt(!isLoggedIn);
+        setShowSavePrompt(!isLoggedIn);
       }
 
-      // Show occupation cards after matching for farmer queries
       if (resp.state === 'intake' && (msg.toLowerCase().includes('farmer') || msg.toLowerCase().includes('किसान'))) {
-        setTimeout(() => {
-          setShowOccupationCards(true);
-        }, 1000);
+        setTimeout(() => setShowOccupationCards(true), 1000);
       }
 
-      // Play TTS
+      // Play TTS — mouth opens on start, closes on end
       if (resp.audio_b64) {
-        setVoicePlaying(true);
-        await playAudioB64(resp.audio_b64);
-        setVoicePlaying(false);
+        await playAudioB64(
+          resp.audio_b64,
+          () => setVoicePlaying(true),
+          () => setVoicePlaying(false),
+        );
       }
 
-      // Goodbye state — save session summary
       if (resp.state === 'goodbye') {
         localStorage.setItem('js_last_session', JSON.stringify({
           action: resp.reply.slice(0, 80),
@@ -198,7 +274,27 @@ export function Chat() {
       setTyping(false);
       setVoiceState('default');
     }
-  };
+  }, [
+    input, userHasSpoken, messages, sessionId, currentLanguage, chatState, isLoggedIn,
+    addMessage, setChatState, mergeProfile, setSchemes, setGapValue, setVoicePlaying,
+    updateLastInputTime,
+  ]);
+
+  // Keep ref in sync with the latest handleSend (fixes F7 stale closure)
+  handleSendRef.current = handleSend;
+
+  // Run-once: seed first message and handle navigation state
+  useEffect(() => {
+    if (messages.length === 0) {
+      addMessage({ id: v4Fallback(), role: 'bot', text: t('chat.first') });
+    }
+    const state = location.state as any;
+    if (state?.initialMessage) {
+      setTimeout(() => handleSendRef.current?.(state.initialMessage), 500);
+      window.history.replaceState({}, '');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleOccupationSelect = (value: string) => {
     setShowOccupationCards(false);
@@ -215,13 +311,11 @@ export function Chat() {
     { key: 'gender', label: t('profile.gender'), value: String(profile.gender || '') },
   ];
 
-  // Render logic remains similar
-
   return (
     <div className="max-w-7xl mx-auto flex h-[calc(100vh-5rem)] relative">
       {/* Aurora Background */}
       <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden">
-        <motion.div 
+        <motion.div
           className="absolute inset-0 opacity-[0.12]"
           animate={{
             background: [
@@ -233,13 +327,13 @@ export function Chat() {
                radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.8) 0%, transparent 70%)`,
               `radial-gradient(circle at 20% 30%, rgba(255, 153, 51, 0.4) 0%, transparent 50%),
                radial-gradient(circle at 80% 60%, rgba(19, 136, 8, 0.4) 0%, transparent 50%),
-               radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.8) 0%, transparent 70%)`
-            ]
+               radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.8) 0%, transparent 70%)`,
+            ],
           }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
         />
       </div>
-      
+
       <div className="flex-1 flex flex-col min-w-0">
         {/* Progress Bar */}
         <ChatProgressBar activeStep={progressStep as 0 | 1 | 2} profileProgress={profileProgress} />
@@ -269,14 +363,17 @@ export function Chat() {
                   {msg.role === 'bot' && (
                     <div className="flex items-center gap-2 mb-2">
                       <ShubhAvatarSmall />
-                      <button 
+                      <button
                         className="text-muted-foreground hover:text-[#FF9933] transition-colors"
-                        title={lang === 'hi' ? 'सुनें' : 'Listen'}
+                        title={lang === 'hi' ? 'फिर सुनें' : 'Replay'}
                         onClick={async () => {
                           if (msg.audioB64) {
-                            await playAudioB64(msg.audioB64);
+                            await playAudioB64(
+                              msg.audioB64,
+                              () => setVoicePlaying(true),
+                              () => setVoicePlaying(false),
+                            );
                           }
-                          // Phase 3: if no stored audio, call TTS API
                         }}
                       >
                         <Volume2 className="w-4 h-4" />
@@ -293,7 +390,7 @@ export function Chat() {
           <OccupationCards visible={showOccupationCards} onSelect={handleOccupationSelect} />
 
           {typing && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="flex justify-start"
@@ -320,15 +417,15 @@ export function Chat() {
             >
               <p style={{ fontSize: '0.9rem', fontWeight: 500 }}>{t('save.prompt')}</p>
               <div className="flex gap-2">
-                <button 
-                  className="px-4 py-2 rounded-full bg-gradient-to-r from-[#138808] to-[#0f6d06] text-white shadow-md hover:shadow-lg transition-all" 
+                <button
+                  className="px-4 py-2 rounded-full bg-gradient-to-r from-[#138808] to-[#0f6d06] text-white shadow-md hover:shadow-lg transition-all"
                   style={{ fontSize: '0.85rem', fontWeight: 600 }}
                 >
                   {t('save.google')}
                 </button>
-                <button 
-                  onClick={() => setShowSavePrompt(false)} 
-                  className="px-4 py-2 rounded-full border border-border bg-white hover:bg-muted transition-all" 
+                <button
+                  onClick={() => setShowSavePrompt(false)}
+                  className="px-4 py-2 rounded-full border border-border bg-white hover:bg-muted transition-all"
                   style={{ fontSize: '0.85rem' }}
                 >
                   {t('save.notnow')}
@@ -349,8 +446,8 @@ export function Chat() {
             >
               <button
                 onClick={() => {
-                   setActiveScheme(schemes[0]?.scheme_id || null);
-                   navigate('/form-fill');
+                  setActiveScheme(schemes[0]?.scheme_id || null);
+                  navigate('/form-fill');
                 }}
                 className="w-full py-3 rounded-xl text-white flex items-center justify-center gap-2"
                 style={{
@@ -371,7 +468,9 @@ export function Chat() {
           {showSilenceBar && (
             <div className="absolute -top-6 left-0 right-0 px-4">
               <p className="text-center text-muted-foreground mb-1" style={{ fontSize: '11px', fontFamily: 'Manrope, sans-serif' }}>
-                {lang === 'hi' ? `${Math.floor(10 * (1 - silenceProgress))} सेकेंड में सारांश देंगे...` : `Summary in ${Math.floor(10 * (1 - silenceProgress))}s...`}
+                {lang === 'hi'
+                  ? `${Math.floor(10 * (1 - silenceProgress))} सेकेंड में सारांश देंगे...`
+                  : `Summary in ${Math.floor(10 * (1 - silenceProgress))}s...`}
               </p>
               <div className="h-1 bg-muted rounded-full overflow-hidden">
                 <motion.div
@@ -384,7 +483,7 @@ export function Chat() {
             </div>
           )}
 
-          {/* Voice Waveform */}
+          {/* Voice Waveform — shows real AnalyserNode data when listening */}
           <AnimatePresence>
             {voiceState === 'listening' && (
               <motion.div
@@ -393,14 +492,18 @@ export function Chat() {
                 exit={{ opacity: 0, height: 0 }}
                 className="mb-3 flex flex-col items-center gap-2"
               >
-                <VoiceWaveform />
+                <VoiceWaveform
+                  analyserNode={analyserRef.current}
+                  isActive={voiceState === 'listening'}
+                  barCount={20}
+                />
                 <p className="text-[#FF9933]" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
                   {t('voice.listening')}
                 </p>
               </motion.div>
             )}
           </AnimatePresence>
-          
+
           <div className="flex items-center gap-2">
             <VoiceButton onClick={handleVoice} state={voiceState} size="sm" />
             <input
@@ -431,13 +534,13 @@ export function Chat() {
       </button>
 
       <div className={`${sidebarOpen ? 'fixed inset-0 z-50 bg-black/40 md:relative md:bg-transparent' : 'hidden md:block'} md:w-80 lg:w-96`}>
-        <div 
+        <div
           className={`${sidebarOpen ? 'absolute right-0 top-0 h-full w-80 lg:w-96' : ''} bg-gradient-to-b from-background to-white border-l border-border p-5 overflow-y-auto h-full`}
           style={{ backdropFilter: 'blur(10px)' }}
         >
           {sidebarOpen && (
-            <button 
-              onClick={() => setSidebarOpen(false)} 
+            <button
+              onClick={() => setSidebarOpen(false)}
               className="md:hidden mb-3 text-muted-foreground hover:text-foreground text-2xl"
             >
               ✕

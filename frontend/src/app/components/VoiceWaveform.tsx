@@ -1,50 +1,69 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { motion } from 'motion/react';
 
-export function VoiceWaveform() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+interface VoiceWaveformProps {
+  analyserNode?: AnalyserNode | null;
+  isActive?: boolean;
+  barCount?: number;
+}
+
+export function VoiceWaveform({
+  analyserNode,
+  isActive = false,
+  barCount = 20,
+}: VoiceWaveformProps) {
+  const [bars, setBars] = useState<number[]>(Array(barCount).fill(0.1));
+  const animFrameRef = useRef<number | null>(null);
+  const dataArrayRef = useRef<Uint8Array | null>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!analyserNode || !isActive) {
+      // Idle animation: gentle low pulse
+      const idle = setInterval(() => {
+        setBars(prev => prev.map(() => 0.05 + Math.random() * 0.15));
+      }, 150);
+      return () => clearInterval(idle);
+    }
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    // Real AnalyserNode path
+    analyserNode.fftSize = 64;
+    const bufLen = analyserNode.frequencyBinCount;
+    dataArrayRef.current = new Uint8Array(bufLen);
 
-    const bars = 40;
-    const barWidth = canvas.width / bars;
-    let animationId: number;
+    const draw = () => {
+      animFrameRef.current = requestAnimationFrame(draw);
+      analyserNode.getByteFrequencyData(dataArrayRef.current!);
 
-    const draw = (time: number) => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      for (let i = 0; i < bars; i++) {
-        const height = Math.abs(
-          Math.sin(time * 0.003 + i * 0.3) * 
-          (canvas.height / 2) * 
-          (0.5 + Math.random() * 0.5)
-        );
-
-        const x = i * barWidth;
-        const y = (canvas.height - height) / 2;
-
-        ctx.fillStyle = '#FF9933';
-        ctx.fillRect(x, y, barWidth - 2, height);
-      }
-
-      animationId = requestAnimationFrame(draw);
+      // Sample frequencies evenly across the buffer for barCount bars
+      const step = Math.floor(bufLen / barCount);
+      const newBars = Array.from({ length: barCount }, (_, i) => {
+        const idx = Math.min(i * step, bufLen - 1);
+        return Math.max(0.05, (dataArrayRef.current![idx] / 255) * 0.95);
+      });
+      setBars(newBars);
     };
 
-    draw(0);
-
-    return () => cancelAnimationFrame(animationId);
-  }, []);
+    draw();
+    return () => {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    };
+  }, [analyserNode, isActive, barCount]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={300}
-      height={60}
-      className="mx-auto"
-    />
+    <div className="flex items-center justify-center gap-1 h-12">
+      {bars.map((height, i) => (
+        <motion.div
+          key={i}
+          className="w-1.5 rounded-full bg-gradient-to-t from-[#FF9933] to-[#FFD700]"
+          animate={{ scaleY: height }}
+          transition={{ duration: 0.05, ease: 'linear' }}
+          style={{
+            height: '40px',
+            transformOrigin: 'bottom',
+            opacity: 0.7 + height * 0.3,
+          }}
+        />
+      ))}
+    </div>
   );
 }

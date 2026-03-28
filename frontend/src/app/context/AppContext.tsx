@@ -56,7 +56,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfileState] = useState<Record<string,unknown>>({});
   const [schemes, setSchemes] = useState<SchemeResult[]>([]);
   const [gapValue, setGapValue] = useState(0);
-  const [currentLanguage, setCurrentLanguage] = useState('hi');
+  const [currentLanguage, setCurrentLanguage] = useState(() => {
+    return localStorage.getItem('js_language') || 'hi';
+  });
   const [isVoicePlaying, setIsVoicePlaying] = useState(false);
   const [lastInputTime, setLastInputTime] = useState(Date.now());
   const [applications, setApplications] = useState<Record<string,unknown>>({});
@@ -97,7 +99,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addMessage    = useCallback((m: ChatMessage) => setMessages(p => [...p, m]), []);
   const setProfile    = useCallback((p: Record<string,unknown>) => setProfileState(p), []);
   const mergeProfile  = useCallback((p: Record<string,unknown>) => setProfileState(prev => ({...prev,...p})), []);
-  const setLanguage   = useCallback((l: string) => setCurrentLanguage(l), []);
+  const setLanguage   = useCallback((l: string) => {
+    setCurrentLanguage(l);
+    document.documentElement.lang = l;
+    localStorage.setItem('js_language', l);
+  }, []);
   const updateLastInputTime = useCallback(() => setLastInputTime(Date.now()), []);
   const setActiveScheme = useCallback((id: string|null) => setActiveSchemeId(id), []);
 
