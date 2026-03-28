@@ -8,7 +8,7 @@ interface VedAvatarProps {
   processing?: boolean;
   showLabel?: boolean;
   showPlatform?: boolean;
-  variant?: 'hero' | 'chat' | 'profile'; // New variant prop for different contexts
+  variant?: 'hero' | 'chat' | 'profile';
 }
 
 export function VedAvatar({ 
@@ -24,11 +24,11 @@ export function VedAvatar({
   const [mouthOpen, setMouthOpen] = useState(false);
 
   // Responsive size adjustments based on variant
-  const actualSize = variant === 'chat' ? 32 : variant === 'profile' ? 64 : size;
+  const actualSize = variant === 'chat' ? 36 : variant === 'profile' ? 72 : size;
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const responsiveSize = variant === 'hero' && isMobile ? 120 : actualSize;
+  const responsiveSize = variant === 'hero' && isMobile ? 140 : actualSize;
 
-  // Eye blink every 3-5 seconds
+  // Eye blink logic
   useEffect(() => {
     const blink = () => {
       setBlinking(true);
@@ -38,276 +38,202 @@ export function VedAvatar({
     return () => clearInterval(interval);
   }, []);
 
-  // Mouth animation when speaking
+  // Mouth animation logic
   useEffect(() => {
     if (!speaking) { setMouthOpen(false); return; }
     const interval = setInterval(() => {
       setMouthOpen(prev => !prev);
-    }, 200);
+    }, 180);
     return () => clearInterval(interval);
   }, [speaking]);
 
-  const ringColor = speaking ? 'rgba(255,153,51,1)' : listening ? 'rgba(255,153,51,0.5)' : 'transparent';
-  const ringSpeed = speaking ? 0.8 : 1.5;
-
-  // Processing state: desaturate and add opacity
-  const containerOpacity = processing ? 0.8 : 1;
+  const activeColor = '#FF9933'; // Saffron for active state
 
   return (
     <div className="flex flex-col items-center">
       <motion.div 
         className="relative" 
         style={{ 
-          width: responsiveSize + 40, 
-          height: responsiveSize + 40,
-          opacity: containerOpacity,
-          filter: processing ? 'saturate(0.7)' : 'saturate(1)',
-          transition: 'filter 0.3s ease, opacity 0.3s ease'
+          width: responsiveSize + 22, 
+          height: responsiveSize + 22,
+          opacity: processing ? 0.8 : 1,
+          filter: processing ? 'saturate(0.5)' : 'saturate(1)',
+          transition: 'all 0.3s ease'
         }}
       >
-        {/* Breathing saffron glow - only show in hero variant */}
+        {/* Animated Saffron Glow (Hero only) */}
         {variant === 'hero' && (
           <motion.div
-            className="absolute rounded-full"
+            className="absolute inset-0 rounded-full"
             style={{
-              width: responsiveSize * 1.3,
-              height: responsiveSize * 1.3,
-              left: '50%',
-              top: '50%',
-              transform: 'translate(-50%, -50%)',
-              background: 'radial-gradient(circle, rgba(255,153,51,0.08) 0%, transparent 70%)',
+              background: 'radial-gradient(circle, rgba(255,153,51,0.15) 0%, transparent 70%)',
             }}
-            animate={{ scale: [1, 1.1, 1], opacity: [0.6, 1, 0.6] }}
+            animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.8, 0.4] }}
             transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
           />
         )}
 
-        {/* Speaking pulse ring with enhanced animation */}
-        {speaking && (
+        {/* Pulse Ring for Speaking/Listening */}
+        {(speaking || listening) && (
           <motion.div
-            className="absolute rounded-full"
+            className="absolute inset-0 rounded-full"
             style={{
-              width: responsiveSize + 40,
-              height: responsiveSize + 40,
-              left: '50%',
-              top: '50%',
-              transform: 'translate(-50%, -50%)',
-              border: `2px solid ${ringColor}`,
-              boxShadow: `0 0 20px ${ringColor}`,
+              border: `3px solid ${activeColor}`,
+              boxShadow: speaking ? `0 0 20px ${activeColor}` : 'none',
+              opacity: listening && !speaking ? 0.4 : 1
             }}
-            animate={{ scale: [1, 1.08, 1] }}
-            transition={{ duration: ringSpeed, repeat: Infinity, ease: 'easeInOut' }}
+            animate={{ scale: [1, 1.12, 1] }}
+            transition={{ duration: speaking ? 0.8 : 2, repeat: Infinity, ease: 'easeInOut' }}
           />
         )}
 
-        {/* Listening ring */}
-        {listening && !speaking && (
-          <motion.div
-            className="absolute rounded-full"
-            style={{
-              width: responsiveSize + 40,
-              height: responsiveSize + 40,
-              left: '50%',
-              top: '50%',
-              transform: 'translate(-50%, -50%)',
-              border: `2px solid ${ringColor}`,
-            }}
-            animate={{ scale: [1, 1.06, 1] }}
-            transition={{ duration: ringSpeed, repeat: Infinity, ease: 'easeInOut' }}
-          />
-        )}
-
-        {/* Processing spinner */}
+        {/* Processing Spinner */}
         {processing && (
           <motion.div
-            className="absolute rounded-full"
+            className="absolute inset-0 rounded-full"
             style={{
-              width: responsiveSize + 30,
-              height: responsiveSize + 30,
-              left: '50%',
-              top: '50%',
-              transform: 'translate(-50%, -50%)',
-              border: '3px solid transparent',
-              borderTopColor: '#FF9933',
-              borderRightColor: '#FF9933',
+              border: '4px solid transparent',
+              borderTopColor: activeColor,
+              borderRightColor: activeColor,
+              zIndex: 10
             }}
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           />
         )}
 
-        {/* Platform glow */}
-        {showPlatform && (
-          <div
-            className="absolute rounded-full"
-            style={{
-              width: responsiveSize + 20,
-              height: responsiveSize + 20,
-              left: '50%',
-              top: '50%',
-              transform: 'translate(-50%, -50%)',
-              background: 'radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%)',
-            }}
-          />
-        )}
-
-        {/* Avatar SVG */}
-        <svg
-          width={responsiveSize}
-          height={responsiveSize}
-          viewBox="0 0 220 220"
-          fill="none"
-          style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
+        {/* Main Avatar Container with Tricolor Frame & White Background */}
+        <div 
+          className="absolute inset-0 rounded-full flex items-center justify-center p-[4px] shadow-lg"
+          style={{ 
+            background: 'white',
+            border: '4px solid transparent',
+            backgroundImage: 'linear-gradient(white, white), linear-gradient(to bottom, #FF9933 33%, #FFFFFF 33%, #FFFFFF 66%, #138808 66%)',
+            backgroundOrigin: 'border-box',
+            backgroundClip: 'content-box, border-box',
+          }}
         >
-          {/* Body - white kurta */}
-          <ellipse cx="110" cy="185" rx="55" ry="30" fill="#F5F5F5" />
-          <rect x="80" y="120" width="60" height="70" rx="20" fill="#F5F5F5" />
-          
-          {/* Kurta collar detail */}
-          <path d="M95 120 L110 135 L125 120" stroke="#FF9933" strokeWidth="2" fill="none" />
+          <svg
+            width="100%"
+            height="100%"
+            viewBox="0 0 220 220"
+            fill="none"
+            className="drop-shadow-sm"
+          >
+            {/* --- Character: Ved (Stitch Replica) --- */}
+            
+            {/* Body: White Kurta */}
+            <path d="M50 200 Q110 180 170 200 L190 240 L30 240 Z" fill="#F8FAFC" />
+            
+            {/* Nehru Jacket: Dark Green (Stitch style) */}
+            <path d="M65 195 Q110 185 155 195 L170 240 L50 240 Z" fill="#064E3B" />
+            <path d="M110 185 L110 240" stroke="#047857" strokeWidth="1.5" />
+            
+            {/* Lanyard & ID Badge */}
+            <path d="M90 195 L110 215 L130 195" stroke="#334155" strokeWidth="2" fill="none" />
+            <rect x="100" y="210" width="20" height="25" rx="2" fill="white" stroke="#CBD5E1" strokeWidth="0.5" />
+            <rect x="104" y="214" width="12" height="2" fill="#94A3B8" />
+            
+            {/* Props: Golden Wheat Bundle (Handheld) */}
+            <g transform="translate(15, 175) rotate(-15)">
+               <path d="M10 0 Q15 -40 25 -10M5 -5 Q10 -45 20 -15" stroke="#D97706" strokeWidth="2.5" fill="none" />
+               <circle cx="25" cy="-10" r="3.5" fill="#FBBF24" />
+               <circle cx="20" cy="-15" r="3.5" fill="#FBBF24" />
+               <path d="M10 10 Q15 30 25 10" stroke="#D97706" strokeWidth="2" fill="none" />
+            </g>
+            
+            {/* Props: Modern Digital Tablet (Handheld) */}
+            <g transform="translate(170, 180) rotate(15)">
+               <rect x="0" y="0" width="35" height="48" rx="4" fill="#1E293B" />
+               <rect x="3" y="3" width="29" height="42" rx="1.5" fill="#0F172A" />
+               <circle cx="17.5" cy="45" r="1" fill="#475569" />
+            </g>
+            
+            {/* Neck */}
+            <path d="M98 175 L122 175 L118 190 L102 190 Z" fill="#C68642" />
+            
+            {/* Head/Face Base */}
+            <ellipse cx="110" cy="130" rx="48" ry="55" fill="#C68642" />
+            
+            {/* Beard: Detailed Mixed Grey/White (Stitch style) */}
+            <path d="M62 140 Q60 185 110 195 Q160 185 158 140 Z" fill="#F1F5F9" opacity="0.95" />
+            <path d="M70 155 Q110 190 150 155" stroke="#E2E8F0" strokeWidth="2.5" fill="none" />
+            <path d="M80 165 Q110 185 140 165" stroke="#CBD5E1" strokeWidth="1.5" fill="none" />
 
-          {/* Neck */}
-          <rect x="100" y="105" width="20" height="20" rx="8" fill="#C68642" />
+            {/* Saffron Saafa (Turban) - Rural Indian Cotton Style */}
+            <path d="M60 105 Q55 50 110 45 Q165 50 160 105" fill="#FF9933" />
+            <path d="M60 105 Q110 85 160 105" stroke="#FB923C" strokeWidth="5" fill="none" />
+            <path d="M65 90 Q110 75 155 90" stroke="#FFEDD5" strokeWidth="2.5" fill="none" opacity="0.5" />
+            <path d="M75 75 Q110 65 145 75" stroke="#FB923C" strokeWidth="4" fill="none" />
+            <path d="M155 95 Q170 110 155 125" stroke="#FF9933" strokeWidth="8" fill="none" strokeLinecap="round" /> {/* Loose end wrap */}
 
-          {/* Head */}
-          <ellipse cx="110" cy="80" rx="40" ry="45" fill="#C68642" />
+            {/* Eyes Section with Blinking */}
+            {blinking ? (
+              <g>
+                <line x1="88" y1="128" x2="104" y2="128" stroke="#2C1810" strokeWidth="3.5" strokeLinecap="round" />
+                <line x1="116" y1="128" x2="132" y2="128" stroke="#2C1810" strokeWidth="3.5" strokeLinecap="round" />
+              </g>
+            ) : (
+              <g>
+                {/* Left Eye */}
+                <ellipse cx="96" cy="126" rx="9" ry="10" fill="white" />
+                <circle cx="97" cy="126" r="6" fill="#2C1810" />
+                <circle cx="99" cy="124" r="2.5" fill="white" opacity="0.9" />
+                {/* Right Eye */}
+                <ellipse cx="124" cy="126" rx="9" ry="10" fill="white" />
+                <circle cx="125" cy="126" r="6" fill="#2C1810" />
+                <circle cx="127" cy="124" r="2.5" fill="white" opacity="0.9" />
+              </g>
+            )}
 
-          {/* Hair */}
-          <ellipse cx="110" cy="50" rx="38" ry="22" fill="#2C1810" />
-          <path d="M72 60 Q72 40, 110 35 Q148 40, 148 60" fill="#2C1810" />
+            {/* Eyebrows: Greyish */}
+            <path d="M83 112 Q96 105 106 115" stroke="#475569" strokeWidth="3" fill="none" strokeLinecap="round" />
+            <path d="M114 115 Q124 105 137 112" stroke="#475569" strokeWidth="3" fill="none" strokeLinecap="round" />
 
-          {/* Eyes */}
-          {blinking ? (
-            <>
-              <line x1="90" y1="78" x2="100" y2="78" stroke="#2C1810" strokeWidth="2" strokeLinecap="round" />
-              <line x1="120" y1="78" x2="130" y2="78" stroke="#2C1810" strokeWidth="2" strokeLinecap="round" />
-            </>
-          ) : (
-            <>
-              {/* Left eye */}
-              <ellipse cx="95" cy="78" rx="7" ry="8" fill="white" />
-              <ellipse cx="96" cy="79" rx="4" ry="5" fill="#2C1810" />
-              <circle cx="97" cy="77" r="1.5" fill="white" opacity="0.9" />
-              {/* Right eye */}
-              <ellipse cx="125" cy="78" rx="7" ry="8" fill="white" />
-              <ellipse cx="126" cy="79" rx="4" ry="5" fill="#2C1810" />
-              <circle cx="127" cy="77" r="1.5" fill="white" opacity="0.9" />
-            </>
-          )}
+            {/* Nose Profile */}
+            <path d="M106 135 Q110 148 114 135" stroke="#8B4513" strokeWidth="2.5" fill="none" opacity="0.6" />
 
-          {/* Eyebrows */}
-          <path d="M85 68 Q95 63, 103 68" stroke="#2C1810" strokeWidth="2" fill="none" strokeLinecap="round" />
-          <path d="M117 68 Q125 63, 135 68" stroke="#2C1810" strokeWidth="2" fill="none" strokeLinecap="round" />
+            {/* Interactive Mouth (Lip Movement) */}
+            {mouthOpen ? (
+              <ellipse cx="110" cy="162" rx="12" ry="8" fill="#78350F" />
+            ) : (
+              <path d="M95 158 Q110 172 125 158" stroke="#78350F" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+            )}
+            
+            {/* Character detail: Friendly smile lines */}
+            <path d="M88 152 Q84 158 88 164M132 152 Q136 158 132 164" stroke="#8B4513" strokeWidth="1" fill="none" opacity="0.4" />
 
-          {/* Nose */}
-          <path d="M108 85 Q110 92, 112 85" stroke="#A0522D" strokeWidth="1.5" fill="none" />
-
-          {/* Mouth */}
-          {mouthOpen ? (
-            <ellipse cx="110" cy="98" rx="8" ry="5" fill="#8B4513" />
-          ) : (
-            <path d="M100 96 Q110 104, 120 96" stroke="#8B4513" strokeWidth="2" fill="none" strokeLinecap="round" />
-          )}
-        </svg>
+          </svg>
+        </div>
       </motion.div>
 
-      {/* Label */}
+      {/* Label (Ved / Jan Saathi Assistant) */}
       {showLabel && (
-        <div className="text-center mt-2">
-          <p style={{ fontFamily: 'Lora, serif', fontSize: '18px', color: 'white', opacity: 0.8 }}>वेद</p>
-          <p style={{ fontFamily: 'Manrope, sans-serif', fontSize: '12px', color: 'white', opacity: 0.5 }}>Jan Saathi</p>
-        </div>
+        <motion.div 
+          className="text-center mt-4"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+        >
+          <p className="font-serif text-2xl font-bold bg-gradient-to-r from-orange-600 to-green-700 bg-clip-text text-transparent">वेद (Ved)</p>
+          <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-slate-500 font-extrabold mt-1">Jan Saathi Assistant</p>
+        </motion.div>
       )}
     </div>
   );
 }
 
-// Enhanced small version for chat bubbles
 export function VedAvatarSmall({ speaking = false, processing = false }: { speaking?: boolean; processing?: boolean }) {
   return (
-    <div className="relative w-8 h-8 flex-shrink-0">
-      {/* Speaking pulse animation */}
-      {speaking && (
-        <motion.div
-          className="absolute inset-0 rounded-full"
-          style={{ 
-            border: '2px solid rgba(255,153,51,0.8)',
-            boxShadow: '0 0 10px rgba(255,153,51,0.5)'
-          }}
-          animate={{ scale: [1, 1.2, 1] }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'easeInOut' }}
-        />
-      )}
-      
-      {/* Processing spinner */}
-      {processing && (
-        <motion.div
-          className="absolute inset-0 rounded-full"
-          style={{ 
-            border: '2px solid transparent',
-            borderTopColor: '#FF9933',
-          }}
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-        />
-      )}
-      
-      <svg 
-        width="32" 
-        height="32" 
-        viewBox="0 0 220 220" 
-        fill="none"
-        style={{
-          opacity: processing ? 0.8 : 1,
-          filter: processing ? 'saturate(0.7)' : 'saturate(1)',
-          transition: 'filter 0.3s ease, opacity 0.3s ease'
-        }}
-      >
-        <circle cx="110" cy="110" r="108" fill="#000080" />
-        <ellipse cx="110" cy="80" rx="35" ry="38" fill="#C68642" />
-        <ellipse cx="110" cy="50" rx="33" ry="18" fill="#2C1810" />
-        <path d="M77 55 Q77 40, 110 35 Q143 40, 143 55" fill="#2C1810" />
-        <ellipse cx="97" cy="78" rx="5" ry="6" fill="white" />
-        <ellipse cx="98" cy="79" rx="3" ry="3.5" fill="#2C1810" />
-        <ellipse cx="123" cy="78" rx="5" ry="6" fill="white" />
-        <ellipse cx="124" cy="79" rx="3" ry="3.5" fill="#2C1810" />
-        <path d="M102 94 Q110 100, 118 94" stroke="#8B4513" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-        <rect x="85" y="115" width="50" height="55" rx="16" fill="#F5F5F5" />
-        <path d="M98 115 L110 126 L122 115" stroke="#FF9933" strokeWidth="2" fill="none" />
-      </svg>
+    <div className="relative w-10 h-10 flex-shrink-0">
+      <VedAvatar size={40} speaking={speaking} processing={processing} variant="chat" />
     </div>
   );
 }
 
-// Profile size version (64px)
 export function VedAvatarProfile({ speaking = false, processing = false }: { speaking?: boolean; processing?: boolean }) {
   return (
-    <div className="relative w-16 h-16 flex-shrink-0">
-      {speaking && (
-        <motion.div
-          className="absolute inset-0 rounded-full"
-          style={{ 
-            border: '2px solid rgba(255,153,51,0.8)',
-            boxShadow: '0 0 15px rgba(255,153,51,0.5)'
-          }}
-          animate={{ scale: [1, 1.15, 1] }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'easeInOut' }}
-        />
-      )}
-      
-      {processing && (
-        <motion.div
-          className="absolute inset-0 rounded-full"
-          style={{ 
-            border: '2px solid transparent',
-            borderTopColor: '#FF9933',
-          }}
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-        />
-      )}
-      
-      <VedAvatar size={64} speaking={speaking} processing={processing} variant="profile" />
+    <div className="relative w-20 h-20 flex-shrink-0">
+      <VedAvatar size={80} speaking={speaking} processing={processing} variant="profile" />
     </div>
   );
 }
