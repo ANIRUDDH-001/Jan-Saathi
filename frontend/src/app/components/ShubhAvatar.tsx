@@ -11,7 +11,7 @@ interface ShubhAvatarProps {
   variant?: 'hero' | 'chat' | 'profile';
 }
 
-const AVATAR_IMAGE_SRC = '/assets/ved_avatar_cutout.png';
+const AVATAR_IMAGE_SRC = '/assets/shubh_avatar_cutout.png';
 
 // Feature coordinates in a fixed 380x422 canvas.
 const F = {

@@ -103,7 +103,7 @@ export function AgriFormFill() {
         <div className="text-center px-8">
           <ShubhAvatar size={100} speaking={step === 'summary' || step === 'generating'} />
           <p className="text-[#000080] mt-4" style={{ fontFamily: 'Lora, serif', fontSize: '18px', fontWeight: 600 }}>
-            {step === 'summary' && (lang === 'hi' ? 'वेद आपकी जानकारी पढ़ रहा है...' : 'Ved is reading your details...')}
+            {step === 'summary' && (lang === 'hi' ? 'शुभ आपकी जानकारी पढ़ रहा है...' : 'Shubh is reading your details...')}
             {step === 'correction' && (lang === 'hi' ? 'बदलाव करें...' : 'Make corrections...')}
             {step === 'confirm' && (lang === 'hi' ? 'क्या मैं form भर दूं?' : 'Should I fill the form?')}
             {step === 'generating' && (lang === 'hi' ? 'फॉर्म बन रहा है...' : 'Form is being generated...')}

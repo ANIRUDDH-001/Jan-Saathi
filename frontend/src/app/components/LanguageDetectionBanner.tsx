@@ -42,7 +42,7 @@ export function LanguageDetectionBanner({ detectedLang, visible, onClose }: Lang
           }}
         >
           <span>🇮🇳</span>
-          <span>{info.name} detected — वेद अब {info.nativeName} में बोलेगा</span>
+          <span>{info.name} detected — शुभ अब {info.nativeName} में बोलेगा</span>
           <button
             onClick={() => {
               setShow(false);

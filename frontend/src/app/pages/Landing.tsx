@@ -260,12 +260,12 @@ export function Landing() {
         <LiveBenefitTicker />
       </section>
 
-      {/* Ved Entry CTA */}
+      {/* Shubh Entry CTA */}
       <section className="py-8 text-center">
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
-          onClick={() => navigate('/ved')}
+          onClick={() => navigate('/')}
           className="px-8 py-4 rounded-full text-white shadow-xl"
           style={{
             background: 'linear-gradient(135deg, #0A0A0A 0%, #1a1a2e 100%)',
@@ -275,7 +275,7 @@ export function Landing() {
             border: '1px solid rgba(255,153,51,0.3)',
           }}
         >
-          🎙️ {lang === 'hi' ? 'वेद से बात करें (Voice Mode)' : 'Talk to Ved (Voice Mode)'}
+          🎙️ {lang === 'hi' ? 'शुभ से बात करें (Voice Mode)' : 'Talk to Shubh (Voice Mode)'}
         </motion.button>
       </section>
 

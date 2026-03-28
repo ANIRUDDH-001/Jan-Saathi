@@ -143,7 +143,7 @@ export function Track() {
 
                 return (
                   <div key={stage.key} className="relative z-10 flex flex-col items-center" style={{ width: `${100 / stages.length}%` }}>
-                    {/* Ved avatar marker at current node */}
+                    {/* Shubh avatar marker at current node */}
                     {isCurrent && (
                       <motion.div
                         initial={{ scale: 0, y: -10 }}

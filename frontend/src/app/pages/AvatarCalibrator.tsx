@@ -10,7 +10,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
  * Route: /calibrate
  */
 
-const AVATAR_IMAGE_SRC = '/assets/ved_avatar_cutout.png';
+const AVATAR_IMAGE_SRC = '/assets/shubh_avatar_cutout.png';
 
 // The fixed canvas dimensions used in ShubhAvatar's SVG viewBox
 const CANVAS_W = 380;
@@ -135,10 +135,10 @@ export function AvatarCalibrator() {
       {/* LEFT: SVG Canvas */}
       <div style={{ flex: '0 0 auto' }}>
         <h2 style={{ marginBottom: 12, fontSize: 20, color: '#FF9933' }}>
-          🎯 Ved Avatar Calibrator
+          🎯 Shubh Avatar Calibrator
         </h2>
         <p style={{ fontSize: 13, color: '#aaa', marginBottom: 16, maxWidth: 500 }}>
-          <strong>Drag</strong> the colored circles to position them over Ved's actual eyes and
+          <strong>Drag</strong> the colored circles to position them over Shubh's actual eyes and
           mouth. The skin-colored patches will cover the original features, and the SVG eyes/mouth
           will be drawn on top.
         </p>

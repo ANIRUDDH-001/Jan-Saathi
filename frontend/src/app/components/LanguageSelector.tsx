@@ -166,8 +166,8 @@ export function LanguageSelector() {
                   }}
                 >
                   {lang === 'hi' 
-                    ? 'वेद आपकी आवाज़ से भाषा पहचानता है' 
-                    : 'Ved automatically detects your language from speech'}
+                    ? 'शुभ आपकी आवाज़ से भाषा पहचानता है' 
+                    : 'Shubh automatically detects your language from speech'}
                 </p>
               </div>
             </motion.div>

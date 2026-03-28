@@ -36,7 +36,7 @@ export function GoodbyeSummary({ visible, onClose }: GoodbyeSummaryProps) {
           }}
         >
           <div className="flex flex-col items-center px-6 py-8 h-full overflow-y-auto">
-            {/* Ved Avatar */}
+            {/* Shubh Avatar */}
             <ShubhAvatar size={80} showPlatform />
 
             {/* Heading */}
