@@ -6,6 +6,10 @@ interface ShubhAvatarProps {
   speaking?: boolean;
   listening?: boolean;
   processing?: boolean;
+  // Phase 4 aliases
+  isTalking?: boolean;
+  isListening?: boolean;
+  isProcessing?: boolean;
   showLabel?: boolean;
   showPlatform?: boolean;
   variant?: 'hero' | 'chat' | 'profile';
@@ -40,14 +44,20 @@ const F = {
 
 export function ShubhAvatar({
   size = 300,
-  speaking = false,
-  listening = false,
-  processing = false,
+  speaking: speakingProp = false,
+  listening: listeningProp = false,
+  processing: processingProp = false,
+  isTalking = false,
+  isListening = false,
+  isProcessing = false,
   showLabel = false,
   showPlatform = false,
   variant = 'hero',
 }: ShubhAvatarProps) {
-  const [blinking, setBlinking] = useState(false);
+  const speaking = speakingProp || isTalking;
+  const listening = listeningProp || isListening;
+  const processing = processingProp || isProcessing;
+  const [isBlinking, setIsBlinking] = useState(false);
   const [isMobile, setIsMobile] = useState(
     typeof window !== 'undefined' ? window.innerWidth < 640 : false
   );
@@ -63,8 +73,8 @@ export function ShubhAvatar({
 
   useEffect(() => {
     const blink = () => {
-      setBlinking(true);
-      setTimeout(() => setBlinking(false), 150);
+      setIsBlinking(true);
+      setTimeout(() => setIsBlinking(false), 150);
     };
 
     const interval = setInterval(blink, 3000 + Math.random() * 2000);
@@ -248,7 +258,7 @@ export function ShubhAvatar({
               - OPEN (default): Nothing overlaid, original artwork eyes show through
               - BLINK: Feathered patches cover original eyes + closed-eye curves drawn on top
           */}
-          {blinking && (
+          {isBlinking && (
             <>
               {/* Feathered patches to cover original open eyes during blink */}
               <ellipse cx={F.lex} cy={F.ley} rx={F.eyePatchRx * 1.4} ry={F.eyePatchRy * 1.5} fill="url(#eyePatchGradL)" filter="url(#softEdge)" />
@@ -357,12 +367,12 @@ export function ShubhAvatar({
 }
 
 export function ShubhAvatarSmall({ speaking = false, processing = false }: { speaking?: boolean; processing?: boolean }) {
-  const [blinking, setBlinking] = useState(false);
+  const [isBlinking, setIsBlinking] = useState(false);
 
   useEffect(() => {
     const blink = () => {
-      setBlinking(true);
-      setTimeout(() => setBlinking(false), 150);
+      setIsBlinking(true);
+      setTimeout(() => setIsBlinking(false), 150);
     };
 
     const interval = setInterval(blink, 3000 + Math.random() * 2000);
@@ -443,7 +453,7 @@ export function ShubhAvatarSmall({ speaking = false, processing = false }: { spe
             </filter>
           </defs>
 
-          {blinking && (
+          {isBlinking && (
             <>
               <ellipse cx={F.lex} cy={F.ley} rx={F.eyePatchRx * 1.4} ry={F.eyePatchRy * 1.5} fill="url(#eyePatchGradSm)" filter="url(#softEdgeSm)" />
               <ellipse cx={F.rex} cy={F.rey} rx={F.eyePatchRx * 1.4} ry={F.eyePatchRy * 1.5} fill="url(#eyePatchGradSm)" filter="url(#softEdgeSm)" />

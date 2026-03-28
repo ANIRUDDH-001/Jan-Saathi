@@ -95,6 +95,8 @@ export function Chat() {
 
   // Ref always pointing to latest handleSend — fixes stale-closure in run-once useEffect (F7)
   const handleSendRef = useRef<((text?: string) => Promise<void>) | null>(null);
+  // Ref to processVoice — allows run-once useEffect to call it without stale closure
+  const processVoiceRef = useRef<((blob: Blob) => Promise<void>) | null>(null);
 
   // Progress bar step
   const progressStep = chatState === 'intake' ? 0 : chatState === 'match' ? 1 : 2;
@@ -281,6 +283,7 @@ export function Chat() {
 
   // Keep ref in sync with the latest handleSend (fixes F7 stale closure)
   handleSendRef.current = handleSend;
+  processVoiceRef.current = processVoice;
 
   // Run-once: seed first message and handle navigation state
   useEffect(() => {
@@ -288,7 +291,11 @@ export function Chat() {
       addMessage({ id: v4Fallback(), role: 'bot', text: t('chat.first') });
     }
     const state = location.state as any;
-    if (state?.initialMessage) {
+    if (state?.fromAudioEntry && state?.audioBlob) {
+      setVoiceState('processing');
+      processVoiceRef.current?.(state.audioBlob as Blob);
+      window.history.replaceState({}, '');
+    } else if (state?.initialMessage) {
       setTimeout(() => handleSendRef.current?.(state.initialMessage), 500);
       window.history.replaceState({}, '');
     }

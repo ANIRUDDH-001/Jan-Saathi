@@ -1,7 +1,11 @@
 """Chat router — 4-state machine: intake → match → guide → form_fill."""
 import json
+import re
+import logging
 import httpx
 from fastapi import APIRouter, HTTPException, Request
+
+logger = logging.getLogger(__name__)
 from app.models import ChatRequest, ChatResponse
 from app.services import supabase_db as db
 from app.services import groq_llm as llm
@@ -50,8 +54,19 @@ async def chat(req: ChatRequest, request: Request):
         result = await llm.process_intake(req.message, profile, language)
         extracted = result.get("extracted", {})
 
-        # Merge extracted fields into profile
+        # Merge extracted fields into profile (skip None values)
         profile.update({k: v for k, v in extracted.items() if v is not None})
+
+        # Default occupation_subtype to "crop_farmer" when occupation is farmer
+        # Prevents the bot asking "crop farmer or dairy farmer?" instead of asking age
+        if profile.get("occupation") == "farmer" and not profile.get("occupation_subtype"):
+            profile["occupation_subtype"] = "crop_farmer"
+
+        # Normalize income: LLM sometimes returns string like "less_than_10000"
+        raw_income = profile.get("income")
+        if isinstance(raw_income, str):
+            nums = re.findall(r'\d+', raw_income)
+            profile["income"] = int(nums[0]) if nums else None
 
         # Check if threshold fields collected (state + occupation_subtype + age)
         threshold_met = all([
@@ -61,47 +76,61 @@ async def chat(req: ChatRequest, request: Request):
         ])
 
         if threshold_met:
-            # Trigger scheme matching using profile-aware embedding
-            query_embedding = await embed.embed_profile_query(profile, language)
-
-            matched = db.match_schemes(
-                query_embedding=query_embedding,
-                filter_state=profile.get("state"),
-                filter_occupation=profile.get("occupation_subtype", "crop_farmer"),
-                filter_income=profile.get("income"),
-                filter_bpl=profile.get("bpl"),
-                filter_age=profile.get("age"),
-            )
-
-            gap_value = sum(
-                s.get("benefit_annual_inr", 0)
-                for s in matched
-                if s.get("has_monetary_benefit")
-            )
-
-            gap_result = await llm.generate_gap_announcement(matched, profile, language)
-            reply = gap_result.get("gap_announcement", "") + " " + gap_result.get("top_3_summary", "")
-
-            matched_ids = [s["scheme_id"] for s in matched]
-            db.update_session(req.session_id, {
-                "chat_state": "match",
-                "profile": profile,
-                "language": language,
-                "matched_scheme_ids": matched_ids,
-                "gap_value": gap_value,
-            })
-
-            db.save_anonymous_query(req.session_id, req.message, profile, len(matched), language)
             try:
-                audio = await sarvam.text_to_speech(reply, LANG_TO_SARVAM.get(language, "hi-IN"))
-            except Exception:
-                audio = ""
+                # Trigger scheme matching using profile-aware embedding
+                query_embedding = await embed.embed_profile_query(profile, language)
 
-            return ChatResponse(
-                reply=reply, audio_b64=audio, state="match",
-                profile=profile, schemes=matched, gap_value=gap_value,
-                session_id=req.session_id, language=language
-            )
+                matched = db.match_schemes(
+                    query_embedding=query_embedding,
+                    filter_state=profile.get("state"),
+                    filter_occupation=profile.get("occupation_subtype", "crop_farmer"),
+                    filter_income=profile.get("income") if isinstance(profile.get("income"), int) else None,
+                    filter_bpl=profile.get("bpl"),
+                    filter_age=profile.get("age") if isinstance(profile.get("age"), int) else None,
+                )
+
+                gap_value = sum(
+                    s.get("benefit_annual_inr", 0)
+                    for s in matched
+                    if s.get("has_monetary_benefit")
+                )
+
+                gap_result = await llm.generate_gap_announcement(matched, profile, language)
+                reply = gap_result.get("gap_announcement", "") + " " + gap_result.get("top_3_summary", "")
+
+                matched_ids = [s.get("scheme_id") for s in matched if s.get("scheme_id")]
+                db.update_session(req.session_id, {
+                    "chat_state": "match",
+                    "profile": profile,
+                    "language": language,
+                    "matched_scheme_ids": matched_ids,
+                    "gap_value": gap_value,
+                })
+
+                db.save_anonymous_query(req.session_id, req.message, profile, len(matched), language)
+                try:
+                    audio = await sarvam.text_to_speech(reply, LANG_TO_SARVAM.get(language, "hi-IN"))
+                except Exception:
+                    audio = ""
+
+                return ChatResponse(
+                    reply=reply, audio_b64=audio, state="match",
+                    profile=profile, schemes=matched, gap_value=gap_value,
+                    session_id=req.session_id, language=language
+                )
+            except Exception as e:
+                logger.error(f"Scheme matching failed for session {req.session_id}: {e}", exc_info=True)
+                # Fall back to asking the next intake question rather than crashing
+                fallback_q = "Thodi technical dikkat aayi. Kya aap apna state aur umar phir bata sakte hain?"
+                db.update_session(req.session_id, {"profile": profile, "language": language})
+                try:
+                    audio = await sarvam.text_to_speech(fallback_q, LANG_TO_SARVAM.get(language, "hi-IN"))
+                except Exception:
+                    audio = ""
+                return ChatResponse(
+                    reply=fallback_q, audio_b64=audio, state="intake",
+                    profile=profile, session_id=req.session_id, language=language
+                )
         else:
             # Ask for next missing field
             next_q = result.get("next_question_in_language") or result.get("next_question_hindi", "Aap kahan se hain?")

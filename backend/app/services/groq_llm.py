@@ -29,28 +29,33 @@ PLAIN LANGUAGE (mandatory):
 PLAIN = PLAIN_LANGUAGE_RULE
 
 SYSTEM_PROMPTS = {
-    "intake": """You are Shubh, a Hindi-first voice assistant helping rural Indian farmers
-discover government schemes. Agriculture is the ONLY domain.
+    "intake": """You are Shubh, a voice assistant helping rural Indian farmers discover government schemes.
 
-TASK: Extract profile fields from the farmer's natural speech (Hinglish OK).
-Return ONLY valid JSON. No markdown.
+TASK: Extract profile fields from the farmer's natural speech (Hinglish/Hindi/regional OK).
+Return ONLY valid JSON with NO markdown or code fences.
 
-Profile fields to extract:
-- state: Indian state name in English (e.g. "uttar_pradesh")
-- occupation: always "farmer" for this app
-- occupation_subtype: one of ["crop_farmer", "dairy_farmer", "livestock_farmer", "fisherman"]
-- age: integer
-- income: annual income in INR as integer
-- bpl: boolean (BPL card holder)
+Profile fields to extract (include only if mentioned by user):
+- state: Indian state in English snake_case (e.g. "uttar_pradesh", "rajasthan")
+- occupation: always "farmer"
+- occupation_subtype: one of ["crop_farmer","dairy_farmer","livestock_farmer","fisherman"] — default "crop_farmer" if unclear
+- age: integer years
+- income: annual income in INR as INTEGER only — if user says "less than 10000" extract 10000
+- bpl: boolean (has BPL card)
 - gender: "male"/"female"/"other"
 - category: "SC"/"ST"/"OBC"/"General"
 - name: full name
 - district: district name
 
-Return: {"extracted": {"field": "value", ...}, "missing_threshold_fields": ["state","age",...], "next_question_hindi": "...", "next_question_in_language": "..."}
+THRESHOLD FIELDS (need all 3): state, occupation_subtype, age
 
-THRESHOLD FIELDS (must have all 3 to trigger matching): state, occupation_subtype, age
-If all 3 collected → set "ready_to_match": true
+LANGUAGE RULE (CRITICAL): The user's current language is provided as "Language: {code}".
+- "next_question_in_language" MUST be spoken in THAT language (e.g. hi=Hindi, en=English, ta=Tamil)
+- If language is "hi", ask in Hindi/Hinglish
+- If language is "en", ask in English
+- next_question_hindi is ALWAYS in Hindi regardless
+
+Return JSON format:
+{"extracted": {"field": value, ...}, "missing_threshold_fields": ["state","age",...], "next_question_hindi": "Hindi mein poochho", "next_question_in_language": "In the user's language"}
 
 """ + PLAIN_LANGUAGE_RULE,
 
@@ -110,14 +115,32 @@ async def call_groq(messages: list, model_index: int = 0) -> str:
         raise
 
 
+def _safe_json(raw: str, fallback: dict) -> dict:
+    """Parse JSON from LLM response, returning fallback on any parse error."""
+    try:
+        return json.loads(raw)
+    except (json.JSONDecodeError, TypeError, ValueError):
+        # Strip common LLM decoration (```json ... ```)
+        stripped = raw.strip().lstrip("```json").lstrip("```").rstrip("```").strip()
+        try:
+            return json.loads(stripped)
+        except Exception:
+            logger.error(f"Groq returned unparseable JSON: {raw[:300]}")
+            return fallback
+
+
 async def process_intake(message: str, profile: dict, language: str) -> dict:
     """Extract profile fields from user message."""
     messages = [
         {"role": "system", "content": SYSTEM_PROMPTS["intake"]},
-        {"role": "user", "content": f"Language detected: {language}\nCurrent profile: {json.dumps(profile)}\nUser said: {message}"}
+        {"role": "user", "content": f"Language: {language}\nCurrent profile: {json.dumps(profile)}\nUser said: {message}"}
     ]
     raw = await call_groq(messages)
-    return json.loads(raw)
+    return _safe_json(raw, {
+        "extracted": {},
+        "next_question_hindi": "Kripya dobara batayein.",
+        "next_question_in_language": "Kripya dobara batayein." if language == "hi" else "Please repeat that.",
+    })
 
 
 async def generate_gap_announcement(schemes: list, profile: dict, language: str) -> dict:
@@ -131,7 +154,10 @@ async def generate_gap_announcement(schemes: list, profile: dict, language: str)
         {"role": "user", "content": f"Gap: ₹{gap:,}/year. Top 3: {', '.join(top3_names)}. Profile: {json.dumps(profile)}"}
     ]
     raw = await call_groq(messages)
-    return json.loads(raw)
+    return _safe_json(raw, {
+        "gap_announcement": f"Aapke liye ₹{gap:,} tak ke sarkari yojanayen mili hain.",
+        "top_3_summary": ", ".join(top3_names),
+    })
 
 
 async def generate_scheme_guidance(question: str, scheme: dict, language: str) -> dict:
@@ -142,7 +168,7 @@ async def generate_scheme_guidance(question: str, scheme: dict, language: str) -
         {"role": "user", "content": question}
     ]
     raw = await call_groq(messages)
-    return json.loads(raw)
+    return _safe_json(raw, {"reply": "Mujhe abhi ye jaankari nahi mil rahi. Kripya baad mein poochein."})
 
 
 async def process_form_fill(message: str, form_data: dict, missing_fields: list, language: str) -> dict:
@@ -156,7 +182,7 @@ async def process_form_fill(message: str, form_data: dict, missing_fields: list,
         {"role": "user", "content": message}
     ]
     raw = await call_groq(messages)
-    return json.loads(raw)
+    return _safe_json(raw, {"reply": "Samajh nahi aaya. Kripya dobara batayein.", "form_updates": {}, "form_complete": False})
 
 
 async def generate_goodbye_summary(session: dict, language: str) -> str:
@@ -167,7 +193,8 @@ Profile: {json.dumps(session.get('profile',{}))}
 Return JSON: {{"summary_spoken": "3 part summary: what found, what to do next, farewell. Max 60 words total."}}
 """ + PLAIN_LANGUAGE_RULE
     raw = await call_groq([{"role": "user", "content": prompt}])
-    return json.loads(raw).get("summary_spoken", "")
+    result = _safe_json(raw, {"summary_spoken": "Dhanyawaad! Jan Saathi ne aapki madad ki. Milte hain phir."})
+    return result.get("summary_spoken", "Dhanyawaad! Jan Saathi ne aapki madad ki.")
 
 
 def is_goodbye(message: str) -> bool:

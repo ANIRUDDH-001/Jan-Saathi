@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Read(//d//**)"
+      "Read(//d//**)",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(node_modules/.bin/tsc.cmd --noEmit)",
+      "Bash(bash scripts/verify_phase4.sh)",
+      "Bash(xargs ls:*)",
+      "Bash(python -c \"from app.routers.chat import router; from app.services import groq_llm; print\\(''imports OK''\\)\")"
     ]
   }
 }

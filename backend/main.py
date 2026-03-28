@@ -12,18 +12,23 @@ logger = logging.getLogger(__name__)
 
 settings = get_settings()
 
+
+def _normalize_origin(url: str) -> str:
+    # CORS origin matching requires scheme+host(+port) without trailing slash.
+    return (url or "").strip().rstrip("/")
+
+
+allowed_origins = {
+    _normalize_origin(settings.frontend_url),
+    "http://localhost:5173",
+    "https://jan-saathi.vercel.app",
+}
+allowed_origins.discard("")
+
 app = FastAPI(
     title="Jan Saathi API",
     description="Voice-first AI assistant for rural Indian farmers",
     version="1.0.0"
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[settings.frontend_url, "http://localhost:5173"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
 )
 
 
@@ -31,18 +36,36 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         correlation_id = request.headers.get("X-Correlation-ID", str(uuid.uuid4()))
         start = time.monotonic()
-        response = await call_next(request)
-        duration_ms = int((time.monotonic() - start) * 1000)
-        logger.info(
-            f"{request.method} {request.url.path} "
-            f"status={response.status_code} duration={duration_ms}ms "
-            f"corr={correlation_id}"
-        )
-        response.headers["X-Correlation-ID"] = correlation_id
-        return response
+        try:
+            response = await call_next(request)
+            duration_ms = int((time.monotonic() - start) * 1000)
+            logger.info(
+                f"{request.method} {request.url.path} "
+                f"status={response.status_code} duration={duration_ms}ms "
+                f"corr={correlation_id}"
+            )
+            response.headers["X-Correlation-ID"] = correlation_id
+            return response
+        except Exception:
+            duration_ms = int((time.monotonic() - start) * 1000)
+            logger.exception(
+                f"{request.method} {request.url.path} "
+                f"status=500 duration={duration_ms}ms corr={correlation_id}"
+            )
+            raise
 
 
 app.add_middleware(RequestLoggingMiddleware)
+
+# Keep CORS as the outermost app middleware so headers are added for all responses,
+# including handled error responses from downstream routes/middleware.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=sorted(allowed_origins),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(chat.router,         prefix="/api/chat",         tags=["chat"])
 app.include_router(voice.router,        prefix="/api/voice",        tags=["voice"])
