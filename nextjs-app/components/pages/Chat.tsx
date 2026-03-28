@@ -91,6 +91,21 @@ export function Chat() {
   const [userHasSpoken, setUserHasSpoken] = useState(false);
   const mediaRef = useRef<MediaRecorder | null>(null);
 
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  );
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   // Audio graph refs for real waveform visualisation
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -353,6 +368,11 @@ export function Chat() {
       </div>
 
       <div className="flex-1 flex flex-col min-w-0">
+        {!isOnline && (
+          <div className="bg-red-500 text-white text-center py-2 text-sm w-full font-medium shadow-sm z-50 relative">
+            Offline mode — Awaaz features unavailable. Text mode use karein.
+          </div>
+        )}
         {/* Progress Bar */}
         <ChatProgressBar activeStep={progressStep as 0 | 1 | 2} profileProgress={profileProgress} />
 

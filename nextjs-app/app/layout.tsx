@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   description:
     'Talk to Shubh in your language. Discover government schemes, check eligibility, and apply — all through voice.',
   icons: { icon: '/assets/ved_avatar.jpg' },
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({

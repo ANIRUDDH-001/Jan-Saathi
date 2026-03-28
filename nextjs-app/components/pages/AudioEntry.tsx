@@ -24,6 +24,21 @@ export function AudioEntry() {
   const [hasSession, setHasSession] = useState(false);
   const [lastAction, setLastAction] = useState<string | null>(null);
 
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  );
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const analyserRef = useRef<AnalyserNode | null>(null);
   const mediaRef = useRef<MediaRecorder | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -150,6 +165,11 @@ export function AudioEntry() {
       className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden"
       style={{ backgroundColor: '#000020' }}
     >
+      {!isOnline && (
+        <div className="absolute top-0 inset-x-0 z-[200] bg-red-500 text-white text-center py-2 text-sm w-full font-medium shadow-md">
+          Offline mode — Awaaz features unavailable. Text mode use karein.
+        </div>
+      )}
       {/* Grain texture overlay */}
       <div
         className="absolute inset-0 pointer-events-none"
