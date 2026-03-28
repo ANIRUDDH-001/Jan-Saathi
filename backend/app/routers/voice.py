@@ -22,5 +22,8 @@ async def transcribe_audio(
 @router.post("/speak")
 async def synthesize_speech(text: str, language: str = "hi-IN"):
     """Convert text to speech using Bulbul v3."""
-    audio_b64 = await sarvam.text_to_speech(text, language)
-    return {"audio_b64": audio_b64, "language": language}
+    try:
+        audio_b64 = await sarvam.text_to_speech(text, language)
+        return {"audio_b64": audio_b64, "language": language}
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"TTS service error: {str(e)}")

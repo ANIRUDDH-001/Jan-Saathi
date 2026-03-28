@@ -30,7 +30,6 @@ async def transcribe(audio_bytes: bytes, language_code: str = "hi-IN") -> dict:
                         "language_code": language_code,
                         "with_timestamps": "false",
                         "with_diarization": "false",
-                        "mode": "online",
                     }
                 )
         response.raise_for_status()
@@ -51,14 +50,11 @@ async def text_to_speech(text: str, language_code: str = "hi-IN") -> str:
             f"{BASE}/text-to-speech",
             headers={**HEADERS, "Content-Type": "application/json"},
             json={
-                "inputs": [text[:500]],  # Bulbul v3 max ~500 chars per call
+                "text": text[:2500],  # Bulbul v3 supports up to 2500 chars
                 "target_language_code": language_code,
                 "speaker": _s.sarvam_tts_speaker,
-                "pitch": 0,
-                "pace": 1.1,  # Slightly faster for snappy responses
-                "loudness": 1.5,
-                "speech_sample_rate": 22050,
-                "enable_preprocessing": True,
+                "pace": 1.1,
+                "sample_rate": 22050,
                 "model": _s.sarvam_tts_model,
             }
         )

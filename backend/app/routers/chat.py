@@ -33,7 +33,10 @@ async def chat(req: ChatRequest, request: Request):
                 "timestamp": "now()"
             }
         })
-        audio = await sarvam.text_to_speech(summary, LANG_TO_SARVAM.get(language, "hi-IN"))
+        try:
+            audio = await sarvam.text_to_speech(summary, LANG_TO_SARVAM.get(language, "hi-IN"))
+        except Exception:
+            audio = ""
         return ChatResponse(
             reply=summary, audio_b64=audio, state="goodbye",
             profile=profile, session_id=req.session_id, language=language
@@ -88,7 +91,10 @@ async def chat(req: ChatRequest, request: Request):
             })
             
             db.save_anonymous_query(req.session_id, req.message, profile, len(matched), language)
-            audio = await sarvam.text_to_speech(reply, LANG_TO_SARVAM.get(language, "hi-IN"))
+            try:
+                audio = await sarvam.text_to_speech(reply, LANG_TO_SARVAM.get(language, "hi-IN"))
+            except Exception:
+                audio = ""
             
             return ChatResponse(
                 reply=reply, audio_b64=audio, state="match",
@@ -99,7 +105,10 @@ async def chat(req: ChatRequest, request: Request):
             # Ask for next missing field
             next_q = result.get("next_question_in_language") or result.get("next_question_hindi", "Aap kahan se hain?")
             db.update_session(req.session_id, {"profile": profile, "language": language})
-            audio = await sarvam.text_to_speech(next_q, LANG_TO_SARVAM.get(language, "hi-IN"))
+            try:
+                audio = await sarvam.text_to_speech(next_q, LANG_TO_SARVAM.get(language, "hi-IN"))
+            except Exception:
+                audio = ""
             
             return ChatResponse(
                 reply=next_q, audio_b64=audio, state="intake",
@@ -119,7 +128,10 @@ async def chat(req: ChatRequest, request: Request):
         reply = result.get("reply", "")
         
         db.update_session(req.session_id, {"chat_state": "guide"})
-        audio = await sarvam.text_to_speech(reply, LANG_TO_SARVAM.get(language, "hi-IN"))
+        try:
+            audio = await sarvam.text_to_speech(reply, LANG_TO_SARVAM.get(language, "hi-IN"))
+        except Exception:
+            audio = ""
         
         return ChatResponse(
             reply=reply, audio_b64=audio, state="guide",
@@ -134,7 +146,10 @@ async def chat(req: ChatRequest, request: Request):
         scheme = matched[0] if matched else {}
         result = llm.generate_scheme_guidance(req.message, scheme, language)
         reply = result.get("reply", "")
-        audio = await sarvam.text_to_speech(reply, LANG_TO_SARVAM.get(language, "hi-IN"))
+        try:
+            audio = await sarvam.text_to_speech(reply, LANG_TO_SARVAM.get(language, "hi-IN"))
+        except Exception:
+            audio = ""
         
         return ChatResponse(
             reply=reply, audio_b64=audio, state="guide",
@@ -155,7 +170,10 @@ async def chat(req: ChatRequest, request: Request):
         reply = result.get("reply", "")
         
         db.update_session(req.session_id, {"form_data": form_data})
-        audio = await sarvam.text_to_speech(reply, LANG_TO_SARVAM.get(language, "hi-IN"))
+        try:
+            audio = await sarvam.text_to_speech(reply, LANG_TO_SARVAM.get(language, "hi-IN"))
+        except Exception:
+            audio = ""
         
         return ChatResponse(
             reply=reply, audio_b64=audio, state="form_fill",
