@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException
 from datetime import date, timedelta
 from app.models import ApplyRequest, ConfirmFormRequest, ApplicationResponse
 from app.services import supabase_db as db
-from app.services.pdf_generator import generate_pdf, calculate_pmy_contribution
+from app.services.pdf_generator import generate_pdf_b64, calculate_pmy_contribution, profile_to_form_data
 import base64
 
 router = APIRouter()
@@ -28,19 +28,17 @@ async def submit_application(req: ConfirmFormRequest):
     scheme = scheme_r.data[0]
     acronym = scheme.get("acronym", "")
     
-    # Add calculated fields
-    form_data = dict(req.form_data)
+    # Build form data: merge session profile → request form_data
+    session_profile = session.get("profile", {})
+    form_data = {**profile_to_form_data(session_profile, acronym), **{k: str(v) for k, v in req.form_data.items() if v}}
+
     if acronym and "PM-KMY" in acronym:
-        age = session.get("profile", {}).get("age", 30)
-        form_data["monthly_contribution"] = calculate_pmy_contribution(age)
-        form_data["pension_amount"] = 3000
-    
-    # Generate PDF
-    try:
-        pdf_bytes = generate_pdf(acronym, form_data)
-        pdf_b64 = base64.b64encode(pdf_bytes).decode()
-    except FileNotFoundError:
-        pdf_b64 = None
+        age = int(session_profile.get("age", form_data.get("age", 30)) or 30)
+        form_data["monthly_contribution"] = str(calculate_pmy_contribution(age))
+        form_data["pension_amount"] = "3000"
+
+    # Generate PDF — always succeeds (falls back to clean branded PDF)
+    pdf_b64 = generate_pdf_b64(acronym, form_data)
     
     # Create application record
     app_record = db.create_application(
