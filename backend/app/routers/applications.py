@@ -1,10 +1,8 @@
 """Applications router — form submission and tracking."""
 from fastapi import APIRouter, HTTPException
-from datetime import date, timedelta
-from app.models import ApplyRequest, ConfirmFormRequest, ApplicationResponse
+from app.models import ConfirmFormRequest
 from app.services import supabase_db as db
 from app.services.pdf_generator import generate_pdf_b64, calculate_pmy_contribution, profile_to_form_data
-import base64
 
 router = APIRouter()
 

@@ -4,7 +4,6 @@ import io
 import logging
 import os
 from datetime import datetime
-from pathlib import Path
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4

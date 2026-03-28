@@ -12,9 +12,9 @@ import { ChatProgressBar } from '../components/ChatProgressBar';
 import { OccupationCards } from '../components/OccupationCards';
 import { LanguageDetectionBanner } from '../components/LanguageDetectionBanner';
 import { GoodbyeSummary } from '../components/GoodbyeSummary';
-import { ShubhAvatarSmall } from '../components/ShubhAvatar';
+import { VedAvatarSmall } from '../components/VedAvatar';
 import { motion, AnimatePresence } from 'motion/react';
-import { sendChatMessage, transcribeAudio } from '../services/api';
+import { sendChatMessage, transcribeAudio, synthesizeSpeech } from '../services/api';
 
 // Maps short language codes to Sarvam BCP-47 codes
 const LANG_TO_SARVAM: Record<string, string> = {
@@ -124,7 +124,7 @@ export function Chat() {
       if (elapsed > THRESHOLD && chatState !== 'goodbye' && !silenceWarningFired) {
         setSilenceWarningFired(true);
         setShowGoodbye(true);
-        handleSendRef.current?.('bas');
+        handleSendRef.current?.('__SILENCE_TIMEOUT__');
       }
     }, 1000);
 
@@ -288,7 +288,15 @@ export function Chat() {
   // Seed the welcome message whenever the chat is empty (initial load + after session reset).
   useEffect(() => {
     if (messages.length === 0) {
-      addMessage({ id: v4Fallback(), role: 'bot', text: t('chat.first') });
+      const welcomeText = t('chat.first');
+      addMessage({ id: v4Fallback(), role: 'bot', text: welcomeText });
+      synthesizeSpeech(welcomeText, currentLanguage).then(audio_b64 => {
+        if (audio_b64) {
+          playAudioB64(audio_b64, () => setVoicePlaying(true), () => setVoicePlaying(false));
+        }
+      }).catch(() => {});
+      // Show occupation cards on welcome so farmer can confirm/change their subtype
+      setTimeout(() => setShowOccupationCards(true), 800);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages.length]);
@@ -351,7 +359,7 @@ export function Chat() {
 
         {/* Language Detection Banner */}
         <LanguageDetectionBanner
-          detectedLang={lang}
+          detectedLang={detectedLang ?? lang}
           visible={showLangBanner}
           onClose={() => setShowLangBanner(false)}
         />
@@ -373,7 +381,7 @@ export function Chat() {
                 }`}>
                   {msg.role === 'bot' && (
                     <div className="flex items-center gap-2 mb-2">
-                      <ShubhAvatarSmall />
+                      <VedAvatarSmall />
                       <button
                         className="text-muted-foreground hover:text-[#FF9933] transition-colors"
                         title={lang === 'hi' ? 'फिर सुनें' : 'Replay'}
@@ -407,7 +415,7 @@ export function Chat() {
               className="flex justify-start"
             >
               <div className="bg-white/80 backdrop-blur-sm border border-border rounded-2xl rounded-bl-md px-5 py-4 shadow-md flex items-center gap-3">
-                <ShubhAvatarSmall processing={true} />
+                <VedAvatarSmall processing={true} />
                 <div className="flex gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#FF9933] animate-bounce" style={{ animationDelay: '0ms' }} />
                   <span className="w-2.5 h-2.5 rounded-full bg-[#FF9933] animate-bounce" style={{ animationDelay: '150ms' }} />

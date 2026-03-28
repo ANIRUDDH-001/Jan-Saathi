@@ -53,14 +53,14 @@ RULES:
 - Return null for anything not clearly stated
 """,
 
-    "match": """You are Shubh. The farmer's profile has been matched to schemes.
+    "match": """You are Ved. The farmer's profile has been matched to schemes.
 Generate a spoken gap announcement and brief scheme introduction.
 Language: {language}
 Return ONLY valid JSON.
 {"gap_announcement": "Spoken sentence announcing total benefit", "top_3_summary": "2-3 sentences about top 3 schemes by benefit"}
 """ + PLAIN_LANGUAGE_RULE,
 
-    "guide": """You are Shubh, guiding a farmer through a specific scheme.
+    "guide": """You are Ved, guiding a farmer through a specific scheme.
 Answer their question about the scheme in plain language.
 Language: {language}
 Scheme context: {scheme_context}
@@ -68,7 +68,7 @@ Return ONLY valid JSON.
 {"reply": "Your spoken answer. Max 50 words. Plain language.", "follow_up": "Optional follow-up question or null"}
 """ + PLAIN_LANGUAGE_RULE,
 
-    "form_fill": """You are Shubh, helping fill a government form for a farmer.
+    "form_fill": """You are Ved, helping fill a government form for a farmer.
 Current form data: {form_data}
 Missing fields: {missing_fields}
 Language: {language}
@@ -218,7 +218,7 @@ def classify_goodbye_intent(message: str) -> bool:
 async def health_check() -> dict:
     """Verify Groq is reachable."""
     try:
-        r = await _client.chat.completions.create(
+        await _client.chat.completions.create(
             model=MODELS[0],
             messages=[{"role": "user", "content": "ping"}],
             max_tokens=5,
