@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 
 interface VedAvatarProps {
@@ -11,229 +11,515 @@ interface VedAvatarProps {
   variant?: 'hero' | 'chat' | 'profile';
 }
 
-export function VedAvatar({ 
-  size = 220, 
-  speaking = false, 
-  listening = false, 
+const AVATAR_IMAGE_SRC = '/assets/ved_avatar_cutout.png';
+
+// Feature coordinates in a fixed 380x422 canvas.
+const F = {
+  width: 380,
+  height: 422,
+  lex: 169.7,
+  ley: 114.1,
+  rex: 206.7,
+  rey: 113.1,
+  mx: 187,
+  my: 148,
+  eyePatchRx: 9.6,
+  eyePatchRy: 5.8,
+  mouthPatchRx: 13,
+  mouthPatchRy: 7,
+  eyeRx: 6.6,
+  eyeRy: 4.8,
+  pupilRx: 2.8,
+  pupilRy: 3,
+  blinkHalfWidth: 5,
+  lipStroke: '#7B3A23',
+  mouthFill: '#6F2B19',
+  skinEye: '#d79b78',
+  skinMouth: '#d08f6a',
+};
+
+export function VedAvatar({
+  size = 300,
+  speaking = false,
+  listening = false,
   processing = false,
   showLabel = false,
   showPlatform = false,
-  variant = 'hero'
+  variant = 'hero',
 }: VedAvatarProps) {
   const [blinking, setBlinking] = useState(false);
-  const [mouthOpen, setMouthOpen] = useState(false);
 
-  // Responsive size adjustments based on variant
-  const actualSize = variant === 'chat' ? 36 : variant === 'profile' ? 72 : size;
+  const actualSize = variant === 'chat' ? 32 : variant === 'profile' ? 64 : size;
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const responsiveSize = variant === 'hero' && isMobile ? 140 : actualSize;
+  const responsiveSize = variant === 'hero' && isMobile ? 120 : actualSize;
 
-  // Eye blink logic
   useEffect(() => {
     const blink = () => {
       setBlinking(true);
       setTimeout(() => setBlinking(false), 150);
     };
+
     const interval = setInterval(blink, 3000 + Math.random() * 2000);
     return () => clearInterval(interval);
   }, []);
 
-  // Mouth animation logic
-  useEffect(() => {
-    if (!speaking) { setMouthOpen(false); return; }
-    const interval = setInterval(() => {
-      setMouthOpen(prev => !prev);
-    }, 180);
-    return () => clearInterval(interval);
-  }, [speaking]);
-
-  const activeColor = '#FF9933'; // Saffron for active state
+  const ringColor = speaking ? 'rgba(255,153,51,1)' : listening ? 'rgba(255,153,51,0.5)' : 'transparent';
+  const ringSpeed = speaking ? 0.8 : 1.5;
+  const containerOpacity = processing ? 0.8 : 1;
+  const effectPadding = variant === 'hero' ? 60 : 24;
+  const plateSize = responsiveSize * (variant === 'hero' ? 0.88 : 0.92);
+  const plateTop = variant === 'hero' ? '58%' : '56%';
+  const lipMotionState = speaking ? 'speaking' : listening || processing ? 'active' : 'idle';
 
   return (
     <div className="flex flex-col items-center">
-      <motion.div 
-        className="relative" 
-        style={{ 
-          width: responsiveSize + 22, 
-          height: responsiveSize + 22,
-          opacity: processing ? 0.8 : 1,
-          filter: processing ? 'saturate(0.5)' : 'saturate(1)',
-          transition: 'all 0.3s ease'
-        }}
+      <motion.div
+        className="relative"
+        style={{
+          width: responsiveSize + effectPadding,
+          height: responsiveSize + effectPadding,
+          opacity: containerOpacity,
+          filter: processing ? 'saturate(0.7)' : 'saturate(1)',
+          transition: 'filter 0.3s ease, opacity 0.3s ease',
+        } as any}
       >
-        {/* Animated Saffron Glow (Hero only) */}
         {variant === 'hero' && (
           <motion.div
-            className="absolute inset-0 rounded-full"
+            className="absolute rounded-full"
             style={{
-              background: 'radial-gradient(circle, rgba(255,153,51,0.15) 0%, transparent 70%)',
-            }}
-            animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.8, 0.4] }}
+              width: plateSize,
+              height: plateSize,
+              left: '50%',
+              top: plateTop,
+              x: '-50%',
+              y: '-50%',
+              background: 'radial-gradient(circle, rgba(255,153,51,0.08) 0%, transparent 70%)',
+            } as any}
+            animate={{ scale: [1, 1.15, 1], opacity: [0.6, 1, 0.6] }}
             transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
           />
         )}
 
-        {/* Pulse Ring for Speaking/Listening */}
-        {(speaking || listening) && (
+        {speaking && (
           <motion.div
-            className="absolute inset-0 rounded-full"
+            className="absolute rounded-full"
             style={{
-              border: `3px solid ${activeColor}`,
-              boxShadow: speaking ? `0 0 20px ${activeColor}` : 'none',
-              opacity: listening && !speaking ? 0.4 : 1
-            }}
-            animate={{ scale: [1, 1.12, 1] }}
-            transition={{ duration: speaking ? 0.8 : 2, repeat: Infinity, ease: 'easeInOut' }}
+              width: plateSize + 10,
+              height: plateSize + 10,
+              left: '50%',
+              top: plateTop,
+              x: '-50%',
+              y: '-50%',
+              border: `2px solid ${ringColor}`,
+              boxShadow: `0 0 20px ${ringColor}`,
+              zIndex: 0,
+            } as any}
+            animate={{ scale: [1, 1.05, 1] }}
+            transition={{ duration: ringSpeed, repeat: Infinity, ease: 'easeInOut' }}
           />
         )}
 
-        {/* Processing Spinner */}
+        {listening && !speaking && (
+          <motion.div
+            className="absolute rounded-full"
+            style={{
+              width: plateSize + 10,
+              height: plateSize + 10,
+              left: '50%',
+              top: plateTop,
+              x: '-50%',
+              y: '-50%',
+              border: `2px solid ${ringColor}`,
+              zIndex: 0,
+            } as any}
+            animate={{ scale: [1, 1.04, 1] }}
+            transition={{ duration: ringSpeed, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        )}
+
         {processing && (
           <motion.div
-            className="absolute inset-0 rounded-full"
+            className="absolute rounded-full"
             style={{
-              border: '4px solid transparent',
-              borderTopColor: activeColor,
-              borderRightColor: activeColor,
-              zIndex: 10
-            }}
+              width: plateSize + 6,
+              height: plateSize + 6,
+              left: '50%',
+              top: plateTop,
+              x: '-50%',
+              y: '-50%',
+              border: '3px solid transparent',
+              borderTopColor: '#FF9933',
+              borderRightColor: '#FF9933',
+              zIndex: 0,
+            } as any}
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           />
         )}
 
-        {/* Main Avatar Container with Tricolor Frame & White Background */}
-        <div 
-          className="absolute inset-0 rounded-full flex items-center justify-center p-[4px] shadow-lg"
-          style={{ 
-            background: 'white',
-            border: '4px solid transparent',
-            backgroundImage: 'linear-gradient(white, white), linear-gradient(to bottom, #FF9933 33%, #FFFFFF 33%, #FFFFFF 66%, #138808 66%)',
-            backgroundOrigin: 'border-box',
-            backgroundClip: 'content-box, border-box',
+        {showPlatform && (
+          <div
+            className="absolute rounded-full"
+            style={{
+              width: plateSize + 24,
+              height: plateSize + 24,
+              left: '50%',
+              top: plateTop,
+              transform: 'translate(-50%, -50%)',
+              background: 'radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%)',
+              zIndex: 0,
+            }}
+          />
+        )}
+
+        <div
+          className="absolute rounded-full"
+          style={{
+            width: plateSize,
+            height: plateSize,
+            left: '50%',
+            top: plateTop,
+            transform: 'translate(-50%, -50%)',
+            background: 'radial-gradient(circle at 30% 30%, #ffffff 0%, #f6f6f6 100%)',
+            boxShadow: '0 16px 34px rgba(0,0,0,0.24), 0 4px 10px rgba(0,0,0,0.14)',
+            zIndex: 0,
+          }}
+        />
+
+        <div
+          className="absolute rounded-full"
+          style={{
+            width: plateSize * 0.85,
+            height: plateSize * 0.18,
+            left: '50%',
+            top: `calc(${plateTop} + ${plateSize * 0.38}px)`,
+            transform: 'translate(-50%, -50%)',
+            background: 'rgba(0,0,0,0.15)',
+            filter: 'blur(14px)',
+            zIndex: 0,
+          }}
+        />
+
+        <svg
+          width={responsiveSize}
+          height={responsiveSize}
+          viewBox={`0 0 ${F.width} ${F.height}`}
+          fill="none"
+          style={{
+            position: 'absolute',
+            left: '50%',
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
+            filter: 'drop-shadow(0 12px 20px rgba(0,0,0,0.2))',
+            zIndex: 1,
           }}
         >
-          <svg
-            width="100%"
-            height="100%"
-            viewBox="0 0 220 220"
-            fill="none"
-            className="drop-shadow-sm"
+          {/* SVG Definitions — feathered patches & blur */}
+          <defs>
+            <radialGradient id="mouthPatchGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor={F.skinMouth} stopOpacity="1" />
+              <stop offset="55%" stopColor={F.skinMouth} stopOpacity="0.95" />
+              <stop offset="80%" stopColor={F.skinMouth} stopOpacity="0.5" />
+              <stop offset="100%" stopColor={F.skinMouth} stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="eyePatchGradL" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor={F.skinEye} stopOpacity="1" />
+              <stop offset="60%" stopColor={F.skinEye} stopOpacity="0.95" />
+              <stop offset="85%" stopColor={F.skinEye} stopOpacity="0.4" />
+              <stop offset="100%" stopColor={F.skinEye} stopOpacity="0" />
+            </radialGradient>
+            <filter id="softEdge" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" />
+            </filter>
+          </defs>
+
+          <image href={AVATAR_IMAGE_SRC} x="0" y="0" width={F.width} height={F.height} preserveAspectRatio="xMidYMid slice" />
+
+          {/* ── Eyes ──
+              Strategy: Same as mouth — original image eyes are the open state.
+              - OPEN (default): Nothing overlaid, original artwork eyes show through
+              - BLINK: Feathered patches cover original eyes + closed-eye curves drawn on top
+          */}
+          {blinking && (
+            <>
+              {/* Feathered patches to cover original open eyes during blink */}
+              <ellipse cx={F.lex} cy={F.ley} rx={F.eyePatchRx * 1.4} ry={F.eyePatchRy * 1.5} fill="url(#eyePatchGradL)" filter="url(#softEdge)" />
+              <ellipse cx={F.rex} cy={F.rey} rx={F.eyePatchRx * 1.4} ry={F.eyePatchRy * 1.5} fill="url(#eyePatchGradL)" filter="url(#softEdge)" />
+
+              {/* Closed eye curves — gentle downward arcs matching the character's style */}
+              <path
+                d={`M ${F.lex - F.blinkHalfWidth} ${F.ley - 0.5} Q ${F.lex} ${F.ley + 2} ${F.lex + F.blinkHalfWidth} ${F.ley - 0.5}`}
+                stroke="#4d372a"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                fill="none"
+                opacity="0.85"
+              />
+              <path
+                d={`M ${F.rex - F.blinkHalfWidth} ${F.rey - 0.5} Q ${F.rex} ${F.rey + 2} ${F.rex + F.blinkHalfWidth} ${F.rey - 0.5}`}
+                stroke="#4d372a"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                fill="none"
+                opacity="0.85"
+              />
+            </>
+          )}
+
+          {/* ── Mouth / Lip-sync ──
+              Strategy: The original image has an open smiling mouth.
+              - SPEAKING: Patch fades OUT → original smile shows through (open mouth)
+              - IDLE:     Patch fades IN  → covers smile, a closed-mouth line is drawn on top
+              This creates natural open↔close lip-sync using the actual artwork.
+          */}
+
+          {/* Mouth cover patch — hides the original open smile when idle */}
+          <motion.ellipse
+            cx={F.mx}
+            cy={F.my + 1}
+            rx={F.mouthPatchRx * 1.5}
+            ry={F.mouthPatchRy * 1.6}
+            fill="url(#mouthPatchGrad)"
+            filter="url(#softEdge)"
+            animate={{
+              opacity:
+                lipMotionState === 'speaking'
+                  ? [1, 0.3, 0.8, 0.2, 0.7, 0.25, 1]
+                  : lipMotionState === 'active'
+                    ? [1, 0.6, 0.9, 0.5, 1]
+                    : [1],
+            }}
+            transition={{
+              duration: lipMotionState === 'speaking' ? 0.55 : lipMotionState === 'active' ? 1.2 : 0,
+              repeat: lipMotionState !== 'idle' ? Infinity : 0,
+              ease: [0.45, 0.05, 0.55, 0.95],
+            }}
+          />
+
+          {/* Closed mouth line — gentle smile matching the character's style.
+              Visible when idle, fades out when speaking to reveal original smile. */}
+          <motion.g
+            animate={{
+              opacity:
+                lipMotionState === 'speaking'
+                  ? [1, 0.2, 0.85, 0.15, 0.8, 0.2, 1]
+                  : lipMotionState === 'active'
+                    ? [1, 0.5, 0.9, 0.45, 1]
+                    : [1],
+            }}
+            transition={{
+              duration: lipMotionState === 'speaking' ? 0.55 : lipMotionState === 'active' ? 1.2 : 0,
+              repeat: lipMotionState !== 'idle' ? Infinity : 0,
+              ease: [0.45, 0.05, 0.55, 0.95],
+            }}
           >
-            {/* --- Character: Ved (Stitch Replica) --- */}
-            
-            {/* Body: White Kurta */}
-            <path d="M50 200 Q110 180 170 200 L190 240 L30 240 Z" fill="#F8FAFC" />
-            
-            {/* Nehru Jacket: Dark Green (Stitch style) */}
-            <path d="M65 195 Q110 185 155 195 L170 240 L50 240 Z" fill="#064E3B" />
-            <path d="M110 185 L110 240" stroke="#047857" strokeWidth="1.5" />
-            
-            {/* Lanyard & ID Badge */}
-            <path d="M90 195 L110 215 L130 195" stroke="#334155" strokeWidth="2" fill="none" />
-            <rect x="100" y="210" width="20" height="25" rx="2" fill="white" stroke="#CBD5E1" strokeWidth="0.5" />
-            <rect x="104" y="214" width="12" height="2" fill="#94A3B8" />
-            
-            {/* Props: Golden Wheat Bundle (Handheld) */}
-            <g transform="translate(15, 175) rotate(-15)">
-               <path d="M10 0 Q15 -40 25 -10M5 -5 Q10 -45 20 -15" stroke="#D97706" strokeWidth="2.5" fill="none" />
-               <circle cx="25" cy="-10" r="3.5" fill="#FBBF24" />
-               <circle cx="20" cy="-15" r="3.5" fill="#FBBF24" />
-               <path d="M10 10 Q15 30 25 10" stroke="#D97706" strokeWidth="2" fill="none" />
-            </g>
-            
-            {/* Props: Modern Digital Tablet (Handheld) */}
-            <g transform="translate(170, 180) rotate(15)">
-               <rect x="0" y="0" width="35" height="48" rx="4" fill="#1E293B" />
-               <rect x="3" y="3" width="29" height="42" rx="1.5" fill="#0F172A" />
-               <circle cx="17.5" cy="45" r="1" fill="#475569" />
-            </g>
-            
-            {/* Neck */}
-            <path d="M98 175 L122 175 L118 190 L102 190 Z" fill="#C68642" />
-            
-            {/* Head/Face Base */}
-            <ellipse cx="110" cy="130" rx="48" ry="55" fill="#C68642" />
-            
-            {/* Beard: Detailed Mixed Grey/White (Stitch style) */}
-            <path d="M62 140 Q60 185 110 195 Q160 185 158 140 Z" fill="#F1F5F9" opacity="0.95" />
-            <path d="M70 155 Q110 190 150 155" stroke="#E2E8F0" strokeWidth="2.5" fill="none" />
-            <path d="M80 165 Q110 185 140 165" stroke="#CBD5E1" strokeWidth="1.5" fill="none" />
-
-            {/* Saffron Saafa (Turban) - Rural Indian Cotton Style */}
-            <path d="M60 105 Q55 50 110 45 Q165 50 160 105" fill="#FF9933" />
-            <path d="M60 105 Q110 85 160 105" stroke="#FB923C" strokeWidth="5" fill="none" />
-            <path d="M65 90 Q110 75 155 90" stroke="#FFEDD5" strokeWidth="2.5" fill="none" opacity="0.5" />
-            <path d="M75 75 Q110 65 145 75" stroke="#FB923C" strokeWidth="4" fill="none" />
-            <path d="M155 95 Q170 110 155 125" stroke="#FF9933" strokeWidth="8" fill="none" strokeLinecap="round" /> {/* Loose end wrap */}
-
-            {/* Eyes Section with Blinking */}
-            {blinking ? (
-              <g>
-                <line x1="88" y1="128" x2="104" y2="128" stroke="#2C1810" strokeWidth="3.5" strokeLinecap="round" />
-                <line x1="116" y1="128" x2="132" y2="128" stroke="#2C1810" strokeWidth="3.5" strokeLinecap="round" />
-              </g>
-            ) : (
-              <g>
-                {/* Left Eye */}
-                <ellipse cx="96" cy="126" rx="9" ry="10" fill="white" />
-                <circle cx="97" cy="126" r="6" fill="#2C1810" />
-                <circle cx="99" cy="124" r="2.5" fill="white" opacity="0.9" />
-                {/* Right Eye */}
-                <ellipse cx="124" cy="126" rx="9" ry="10" fill="white" />
-                <circle cx="125" cy="126" r="6" fill="#2C1810" />
-                <circle cx="127" cy="124" r="2.5" fill="white" opacity="0.9" />
-              </g>
-            )}
-
-            {/* Eyebrows: Greyish */}
-            <path d="M83 112 Q96 105 106 115" stroke="#475569" strokeWidth="3" fill="none" strokeLinecap="round" />
-            <path d="M114 115 Q124 105 137 112" stroke="#475569" strokeWidth="3" fill="none" strokeLinecap="round" />
-
-            {/* Nose Profile */}
-            <path d="M106 135 Q110 148 114 135" stroke="#8B4513" strokeWidth="2.5" fill="none" opacity="0.6" />
-
-            {/* Interactive Mouth (Lip Movement) */}
-            {mouthOpen ? (
-              <ellipse cx="110" cy="162" rx="12" ry="8" fill="#78350F" />
-            ) : (
-              <path d="M95 158 Q110 172 125 158" stroke="#78350F" strokeWidth="3.5" fill="none" strokeLinecap="round" />
-            )}
-            
-            {/* Character detail: Friendly smile lines */}
-            <path d="M88 152 Q84 158 88 164M132 152 Q136 158 132 164" stroke="#8B4513" strokeWidth="1" fill="none" opacity="0.4" />
-
-          </svg>
-        </div>
+            {/* Closed upper lip — gentle upward curve matching the smile shape */}
+            <path
+              d={`M ${F.mx - 9} ${F.my + 0.5}
+                  C ${F.mx - 5} ${F.my - 1}, ${F.mx - 1.5} ${F.my - 1.8}, ${F.mx} ${F.my - 0.6}
+                  C ${F.mx + 1.5} ${F.my - 1.8}, ${F.mx + 5} ${F.my - 1}, ${F.mx + 9} ${F.my + 0.5}`}
+              stroke="#8B5E3C"
+              strokeWidth="1.4"
+              fill="none"
+              strokeLinecap="round"
+              opacity="0.85"
+            />
+            {/* Closed lower lip — subtle line just below */}
+            <path
+              d={`M ${F.mx - 7} ${F.my + 1}
+                  Q ${F.mx} ${F.my + 3.5} ${F.mx + 7} ${F.my + 1}`}
+              stroke="#8B5E3C"
+              strokeWidth="0.9"
+              fill="none"
+              strokeLinecap="round"
+              opacity="0.45"
+            />
+          </motion.g>
+        </svg>
       </motion.div>
 
-      {/* Label (Ved / Jan Saathi Assistant) */}
       {showLabel && (
-        <motion.div 
-          className="text-center mt-4"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-        >
-          <p className="font-serif text-2xl font-bold bg-gradient-to-r from-orange-600 to-green-700 bg-clip-text text-transparent">वेद (Ved)</p>
-          <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-slate-500 font-extrabold mt-1">Jan Saathi Assistant</p>
-        </motion.div>
+        <div className="text-center mt-2">
+          <p style={{ fontFamily: 'Lora, serif', fontSize: '18px', color: 'white', opacity: 0.8 }}>वेद</p>
+          <p style={{ fontFamily: 'Manrope, sans-serif', fontSize: '12px', color: 'white', opacity: 0.5 }}>Jan Saathi</p>
+        </div>
       )}
     </div>
   );
 }
 
 export function VedAvatarSmall({ speaking = false, processing = false }: { speaking?: boolean; processing?: boolean }) {
+  const [blinking, setBlinking] = useState(false);
+
+  useEffect(() => {
+    const blink = () => {
+      setBlinking(true);
+      setTimeout(() => setBlinking(false), 150);
+    };
+
+    const interval = setInterval(blink, 3000 + Math.random() * 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const lipMotionState = speaking ? 'speaking' : processing ? 'active' : 'idle';
+
   return (
-    <div className="relative w-10 h-10 flex-shrink-0">
-      <VedAvatar size={40} speaking={speaking} processing={processing} variant="chat" />
+    <div className="relative w-8 h-8 flex-shrink-0 rounded-full overflow-hidden">
+      {speaking && (
+        <motion.div
+          className="absolute inset-0 rounded-full"
+          style={{
+            border: '2px solid rgba(255,153,51,0.8)',
+            boxShadow: '0 0 10px rgba(255,153,51,0.5)',
+            zIndex: 2,
+          } as any}
+          animate={{ scale: [1, 1.2, 1] }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      )}
+
+      {processing && (
+        <motion.div
+          className="absolute inset-0 rounded-full"
+          style={{
+            border: '2px solid transparent',
+            borderTopColor: '#FF9933',
+            zIndex: 2,
+          } as any}
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+        />
+      )}
+
+      <div className="relative w-full h-full">
+        <img
+          src={AVATAR_IMAGE_SRC}
+          alt="Ved avatar"
+          className="w-full h-full object-cover"
+          style={{
+            opacity: processing ? 0.8 : 1,
+            filter: processing ? 'saturate(0.7)' : 'saturate(1)',
+            objectPosition: '50% 24%',
+            transform: 'scale(1.65)',
+            transition: 'filter 0.3s ease, opacity 0.3s ease',
+          }}
+        />
+        <svg
+          width={32}
+          height={32}
+          viewBox="0 0 380 422"
+          fill="none"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+          }}
+        >
+          <defs>
+            <radialGradient id="mouthPatchGradSm" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor={F.skinMouth} stopOpacity="1" />
+              <stop offset="55%" stopColor={F.skinMouth} stopOpacity="0.95" />
+              <stop offset="80%" stopColor={F.skinMouth} stopOpacity="0.5" />
+              <stop offset="100%" stopColor={F.skinMouth} stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="eyePatchGradSm" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor={F.skinEye} stopOpacity="1" />
+              <stop offset="60%" stopColor={F.skinEye} stopOpacity="0.95" />
+              <stop offset="85%" stopColor={F.skinEye} stopOpacity="0.4" />
+              <stop offset="100%" stopColor={F.skinEye} stopOpacity="0" />
+            </radialGradient>
+            <filter id="softEdgeSm" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" />
+            </filter>
+          </defs>
+
+          {blinking && (
+            <>
+              <ellipse cx={F.lex} cy={F.ley} rx={F.eyePatchRx * 1.4} ry={F.eyePatchRy * 1.5} fill="url(#eyePatchGradSm)" filter="url(#softEdgeSm)" />
+              <ellipse cx={F.rex} cy={F.rey} rx={F.eyePatchRx * 1.4} ry={F.eyePatchRy * 1.5} fill="url(#eyePatchGradSm)" filter="url(#softEdgeSm)" />
+              <path
+                d={`M ${F.lex - F.blinkHalfWidth} ${F.ley - 0.5} Q ${F.lex} ${F.ley + 2} ${F.lex + F.blinkHalfWidth} ${F.ley - 0.5}`}
+                stroke="#4d372a" strokeWidth="1.8" strokeLinecap="round" fill="none" opacity="0.85"
+              />
+              <path
+                d={`M ${F.rex - F.blinkHalfWidth} ${F.rey - 0.5} Q ${F.rex} ${F.rey + 2} ${F.rex + F.blinkHalfWidth} ${F.rey - 0.5}`}
+                stroke="#4d372a" strokeWidth="1.8" strokeLinecap="round" fill="none" opacity="0.85"
+              />
+            </>
+          )}
+
+          {/* Mouth cover patch — hides original open smile when idle */}
+          <motion.ellipse
+            cx={F.mx} cy={F.my + 1}
+            rx={F.mouthPatchRx * 1.5} ry={F.mouthPatchRy * 1.6}
+            fill="url(#mouthPatchGradSm)" filter="url(#softEdgeSm)"
+            animate={{
+              opacity: lipMotionState === 'speaking' ? [1, 0.3, 0.8, 0.2, 0.7, 0.25, 1]
+                : lipMotionState === 'active' ? [1, 0.6, 0.9, 0.5, 1] : [1],
+            }}
+            transition={{
+              duration: lipMotionState === 'speaking' ? 0.55 : lipMotionState === 'active' ? 1.2 : 0,
+              repeat: lipMotionState !== 'idle' ? Infinity : 0,
+              ease: [0.45, 0.05, 0.55, 0.95],
+            }}
+          />
+          {/* Closed mouth line */}
+          <motion.g
+            animate={{
+              opacity: lipMotionState === 'speaking' ? [1, 0.2, 0.85, 0.15, 0.8, 0.2, 1]
+                : lipMotionState === 'active' ? [1, 0.5, 0.9, 0.45, 1] : [1],
+            }}
+            transition={{
+              duration: lipMotionState === 'speaking' ? 0.55 : lipMotionState === 'active' ? 1.2 : 0,
+              repeat: lipMotionState !== 'idle' ? Infinity : 0,
+              ease: [0.45, 0.05, 0.55, 0.95],
+            }}
+          >
+            <path
+              d={`M ${F.mx - 9} ${F.my + 0.5} C ${F.mx - 5} ${F.my - 1}, ${F.mx - 1.5} ${F.my - 1.8}, ${F.mx} ${F.my - 0.6} C ${F.mx + 1.5} ${F.my - 1.8}, ${F.mx + 5} ${F.my - 1}, ${F.mx + 9} ${F.my + 0.5}`}
+              stroke="#8B5E3C" strokeWidth="1.4" fill="none" strokeLinecap="round" opacity="0.85"
+            />
+            <path
+              d={`M ${F.mx - 7} ${F.my + 1} Q ${F.mx} ${F.my + 3.5} ${F.mx + 7} ${F.my + 1}`}
+              stroke="#8B5E3C" strokeWidth="0.9" fill="none" strokeLinecap="round" opacity="0.45"
+            />
+          </motion.g>
+        </svg>
+      </div>
     </div>
   );
 }
 
 export function VedAvatarProfile({ speaking = false, processing = false }: { speaking?: boolean; processing?: boolean }) {
   return (
-    <div className="relative w-20 h-20 flex-shrink-0">
-      <VedAvatar size={80} speaking={speaking} processing={processing} variant="profile" />
+    <div className="relative w-16 h-16 flex-shrink-0">
+      {speaking && (
+        <motion.div
+          className="absolute inset-0 rounded-full"
+          style={{
+            border: '2px solid rgba(255,153,51,0.8)',
+            boxShadow: '0 0 15px rgba(255,153,51,0.5)',
+          } as any}
+          animate={{ scale: [1, 1.15, 1] }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      )}
+
+      {processing && (
+        <motion.div
+          className="absolute inset-0 rounded-full"
+          style={{
+            border: '2px solid transparent',
+            borderTopColor: '#FF9933',
+          } as any}
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+        />
+      )}
+
+      <VedAvatar size={64} speaking={speaking} processing={processing} variant="profile" />
     </div>
   );
 }

@@ -17,6 +17,7 @@ import { AdminSchemes } from './pages/admin/AdminSchemes';
 import { Sessions } from './pages/admin/Sessions';
 import { AdminUsers } from './pages/admin/AdminUsers';
 import { VedAvatarShowcase } from './pages/VedAvatarShowcase';
+import { AvatarCalibrator } from './pages/AvatarCalibrator';
 
 // App routes configuration
 export const router = createBrowserRouter([
@@ -33,6 +34,7 @@ export const router = createBrowserRouter([
       { path: 'form-fill', Component: AgriFormFill },
       { path: 'auth/callback', Component: AuthCallback },
       { path: 'avatar-showcase', Component: VedAvatarShowcase }, // Dev/Demo page
+      { path: 'calibrate', Component: AvatarCalibrator }, // Dev: drag eyes/mouth positions
       {
         path: 'admin',
         Component: AdminLayout,
