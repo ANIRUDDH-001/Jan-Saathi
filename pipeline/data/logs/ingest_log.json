@@ -1,0 +1,308 @@
+[
+  {
+    "scheme_id": "pradhan-mantri-kisan-samman-nidhi-pm-kisan-nationa",
+    "db_id": "1d10228e-752a-4488-b007-4dbfd141b5cd",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "pradhan-mantri-fasal-bima-yojana-pmfby-national",
+    "db_id": "21afb58c-a4c5-487d-973a-840138707930",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "pradhan-mantri-krishi-sinchayee-yojana-pmksy-natio",
+    "db_id": "5226d71b-085e-4189-8667-9d4a433e9f4f",
+    "status": "ok",
+    "docs": 4
+  },
+  {
+    "scheme_id": "pm-kisan-urja-suraksha-evam-utthan-mahabhiyan-pm-k",
+    "db_id": "ae6c2cce-98c0-49a0-b59e-6a1f33daf0ea",
+    "status": "ok",
+    "docs": 4
+  },
+  {
+    "scheme_id": "soil-health-card-scheme-national",
+    "db_id": "735f275d-d484-4767-8fde-d46d82f12e29",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "national-agriculture-market-e-nam-national",
+    "db_id": "c6e7bf51-89a8-4079-b05d-a1b0714facb5",
+    "status": "ok",
+    "docs": 2
+  },
+  {
+    "scheme_id": "rashtriya-krishi-vikas-yojana-rkvy-national",
+    "db_id": "661ee526-867c-4ef2-9463-dd837e061190",
+    "status": "ok",
+    "docs": 2
+  },
+  {
+    "scheme_id": "paramparagat-krishi-vikas-yojana-pkvy-national",
+    "db_id": "814c68b5-c234-4c58-a367-0c8ffe963d61",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "sub-mission-on-agricultural-mechanization-smam-nat",
+    "db_id": "65d98e5d-cbc1-4a8c-add7-64323d5b1cb7",
+    "status": "ok",
+    "docs": 4
+  },
+  {
+    "scheme_id": "kisan-credit-card-kcc-national",
+    "db_id": "850bac88-783a-465f-8414-aeb435501cfb",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "pm-kisan-maandhan-yojana-pm-kmy-national",
+    "db_id": "b3a9d9c1-0c2a-4c07-8283-46243e12b297",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "national-food-security-mission-nfsm-national",
+    "db_id": "b39d98a5-3462-41f9-8a96-268944370f0c",
+    "status": "ok",
+    "docs": 2
+  },
+  {
+    "scheme_id": "national-beekeeping-and-honey-mission-nbhm-nationa",
+    "db_id": "af896e56-7ba7-4904-8766-f1a4c975976d",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "mahatma-gandhi-national-rural-employment-guarantee",
+    "db_id": "9fbbb035-1b1b-4571-a888-ac7d101d81bf",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "mission-for-integrated-development-of-horticulture",
+    "db_id": "1aacc7d3-c86b-491c-b552-59f97eb61a4d",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "national-bamboo-mission-national",
+    "db_id": "67ae4bbd-3936-4cc3-98b6-72ea9ff3182b",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "pradhan-mantri-annadata-aay-sanrakshan-abhiyan-pm-",
+    "db_id": "7ac33c4a-ffeb-4f2d-bc0f-370e89ef7471",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "agriculture-infrastructure-fund-aif-national",
+    "db_id": "9a646ab6-eedc-4aa5-9e3f-a44c31771d83",
+    "status": "ok",
+    "docs": 4
+  },
+  {
+    "scheme_id": "pm-formalisation-of-micro-food-processing-enterpri",
+    "db_id": "4ced7b13-2893-4f4c-81b5-bee92c122b53",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "pradhan-mantri-matsya-sampada-yojana-pmmsy-nationa",
+    "db_id": "8de3e779-5551-4348-95b9-58ca75fc5e0e",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "rashtriya-gokul-mission-national",
+    "db_id": "17d33699-6801-4643-93ef-0ea0033a927b",
+    "status": "ok",
+    "docs": 2
+  },
+  {
+    "scheme_id": "telangana-rythu-bandhu-scheme-telangana",
+    "db_id": "f1405ce6-d60a-427e-b923-19abcc636b0e",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "odisha-krushak-assistance-for-livelihood-and-incom",
+    "db_id": "19698313-0bf5-4637-895f-f30d326f21ea",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "west-bengal-krishak-bandhu-scheme-westbengal",
+    "db_id": "7b8d1e79-4ee1-47fb-95de-14fa03f3781c",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "andhra-pradesh-ysr-rythu-bharosa-andhrapradesh",
+    "db_id": "9ebd3d57-7981-4c69-8394-a46d8013a498",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "karnataka-raita-samparka-kendras-karnataka",
+    "db_id": "848d8c29-6a19-439f-8069-8d0d5b517328",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "mp-mukhyamantri-kisan-kalyan-yojana-madhyapradesh",
+    "db_id": "215ed29f-96e0-47ab-b3de-10289e50832c",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "maharashtra-mahatma-jyotiba-phule-kisan-karj-mukti",
+    "db_id": "1decde13-535c-4cb6-8d19-98cf31f2b241",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "rajasthan-mukhyamantri-kisan-sahayata-yojana-rajas",
+    "db_id": "e7e666cb-c9f3-4d6e-a1ac-622c2f70f63b",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "punjab-pashu-kisan-credit-card-punjab",
+    "db_id": "eda2f757-809e-436b-9354-fb0b2d6955dc",
+    "status": "ok",
+    "docs": 2
+  },
+  {
+    "scheme_id": "tamil-nadu-cm-solar-powered-pump-scheme-tamilnadu",
+    "db_id": "31dcfdfd-0963-4afa-ba9c-601c14dae305",
+    "status": "ok",
+    "docs": 4
+  },
+  {
+    "scheme_id": "haryana-manohar-jyoti-solar-pump-yojana-haryana",
+    "db_id": "11ae738f-db82-45d9-b019-f12d05a1e392",
+    "status": "ok",
+    "docs": 5
+  },
+  {
+    "scheme_id": "kerala-homestead-farming-programme-kerala",
+    "db_id": "555d16ee-4017-479d-a7cc-9c3029afe1f0",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "chhattisgarh-rajiv-gandhi-kisan-nyay-yojana-chhatt",
+    "db_id": "7a354129-0d9a-4601-be46-da8f97fe276d",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "bihar-diesel-anudan-yojana-krishi-input-anudan-bih",
+    "db_id": "9d035d27-d9a4-43a6-843b-84ef22b5c237",
+    "status": "ok",
+    "docs": 4
+  },
+  {
+    "scheme_id": "jharkhand-birsa-harit-gram-yojana-jharkhand",
+    "db_id": "bf7ba186-be67-4d29-9f6d-ba5659d4580f",
+    "status": "ok",
+    "docs": 2
+  },
+  {
+    "scheme_id": "assam-mukhyamantri-krishi-sa-ayog-yojana-mmksay-as",
+    "db_id": "db1b6c88-b7dc-42f9-8adc-0e1e255c2e6d",
+    "status": "ok",
+    "docs": 4
+  },
+  {
+    "scheme_id": "himachal-pradesh-prakritik-kheti-khushal-kisan-yoj",
+    "db_id": "54b1e513-686f-4a6f-a967-a2dd369a1fed",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "uttarakhand-mukhyamantri-krishi-vikas-yojana-uttar",
+    "db_id": "c6569e9c-6da4-48eb-a9bb-9718c5f7120d",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "goa-sanjivani-agro-products-production-scheme-goa",
+    "db_id": "6c4f28ff-fd8e-40ad-bc79-dc159b8c6d56",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "uttar-pradesh-kisan-karj-rahat-yojana-uttarpradesh",
+    "db_id": "5295550a-0d92-4c7a-823f-c38b13f16c7d",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "gujarat-mukhyamantri-kisan-sahay-yojana-gujarat",
+    "db_id": "8c626df3-92b4-4896-bccb-81540f52da22",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "tripura-mukhyamantri-tripura-grameen-samridhi-yoja",
+    "db_id": "e7b302d1-4215-4e88-808f-0a6dd048e053",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "nagaland-banana-mission-nagaland",
+    "db_id": "24095eb9-21f2-4b20-af70-cb7aca6a8ee5",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "manipur-chief-minister-gi-hakshelgi-tengbang-cm-hi",
+    "db_id": "443e1cb3-99c1-4b61-8a29-e97337ec87b3",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "sikkim-organic-mission-sikkim",
+    "db_id": "0ffc7ec0-2393-487c-9328-59a864d68942",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "national-livestock-mission-national",
+    "db_id": "f3e67c71-4833-4933-aa7c-a5f70ed2cf7a",
+    "status": "ok",
+    "docs": 2
+  },
+  {
+    "scheme_id": "blue-revolution-integrated-development-of-fisherie",
+    "db_id": "9fc186df-66ad-41f1-a569-5de2110029dc",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "national-dairy-plan-ndp-national",
+    "db_id": "3fa2601f-ee0b-474c-9806-0dc23c445c57",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "national-mission-for-sustainable-agriculture-nmsa-",
+    "db_id": "3f7c4378-1205-44e6-bc2f-bec2e05e8749",
+    "status": "ok",
+    "docs": 3
+  },
+  {
+    "scheme_id": "national-rural-livelihoods-mission-nrlm---aajeevik",
+    "db_id": "b2fc147d-af0c-418a-b2fb-0ec7b63caedf",
+    "status": "ok",
+    "docs": 2
+  }
+]

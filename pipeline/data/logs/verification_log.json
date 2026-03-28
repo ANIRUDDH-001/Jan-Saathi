@@ -1,0 +1,126 @@
+{
+  "layer1": {
+    "total_count": {
+      "pass": true,
+      "detail": "51/51"
+    },
+    "hindi_names": {
+      "pass": true,
+      "detail": "51/51"
+    },
+    "ministry": {
+      "pass": true,
+      "detail": "51/51"
+    },
+    "helplines_central": {
+      "pass": false,
+      "detail": "7/26 central schemes"
+    },
+    "helplines_total": {
+      "pass": false,
+      "detail": "7/51"
+    },
+    "pm_kisan_6000": {
+      "pass": true,
+      "detail": "6000"
+    },
+    "pm_kmy_36000": {
+      "pass": true,
+      "detail": "36000"
+    },
+    "spoken_11_langs": {
+      "pass": true,
+      "detail": "51/51"
+    },
+    "form_hindi_questions": {
+      "pass": true,
+      "detail": "7/7"
+    },
+    "embedding_clean": {
+      "pass": true,
+      "detail": "0 bad entries"
+    },
+    "launched_year": {
+      "pass": true,
+      "detail": "46/51"
+    }
+  },
+  "layer2": {
+    "pm-kisan-maandhan-yojana-pm-km": {
+      "pass": true,
+      "detail": "quality=medium, issues=3"
+    },
+    "pm-kisan-maandhan-yojana-pm-km_issues": {
+      "pass": true,
+      "detail": "Benefit amount mentioned (36000) seems incorrect, as the spoken content mentions ₹3000 monthly pension.; Embedding text does not clearly mention the benefit amount correctly.; Hindi plain language usage can be improved for better understanding."
+    },
+    "west-bengal-krishak-bandhu-sch": {
+      "pass": true,
+      "detail": "quality=high, issues=0"
+    },
+    "chhattisgarh-rajiv-gandhi-kisa": {
+      "pass": true,
+      "detail": "quality=high, issues=0"
+    },
+    "sikkim-organic-mission-sikkim": {
+      "pass": true,
+      "detail": "quality=medium, issues=2"
+    },
+    "sikkim-organic-mission-sikkim_issues": {
+      "pass": true,
+      "detail": "PLAIN LANGUAGE not used in embedding text; Benefit amount mentioned as '0 rupees' in embedding text, but 'N/A' in scheme record"
+    },
+    "mission-for-integrated-develop": {
+      "pass": true,
+      "detail": "quality=medium, issues=3"
+    },
+    "mission-for-integrated-develop_issues": {
+      "pass": true,
+      "detail": "HELPLINE: None - helpline number or email should be provided for beneficiary support; BENEFIT AMOUNT (INR): N/A - benefit amount should be specified or mentioned as 'variable'; EMBEDDING TEXT (first 200 chars) seems mostly correct but could be more concise"
+    },
+    "mahatma-gandhi-national-rural-": {
+      "pass": true,
+      "detail": "quality=medium, issues=3"
+    },
+    "mahatma-gandhi-national-rural-_issues": {
+      "pass": true,
+      "detail": "Helpline number is missing; Spoken content in regional languages could be more detailed; One-line summary could be more descriptive"
+    },
+    "punjab-pashu-kisan-credit-card": {
+      "pass": true,
+      "detail": "quality=medium, issues=3"
+    },
+    "punjab-pashu-kisan-credit-card_issues": {
+      "pass": true,
+      "detail": "Helpline number is missing; Launch year is missing; Spoken content in languages other than Hindi is not comprehensive"
+    },
+    "national-food-security-mission": {
+      "pass": true,
+      "detail": "quality=medium, issues=2"
+    },
+    "national-food-security-mission_issues": {
+      "pass": true,
+      "detail": "embedding text seems to have extra information, not just a neutral description; spoke content samples seem correct for regional languages"
+    },
+    "kerala-homestead-farming-progr": {
+      "pass": true,
+      "detail": "quality=medium, issues=3"
+    },
+    "kerala-homestead-farming-progr_issues": {
+      "pass": true,
+      "detail": "Helpline number is missing; Launched year is recent, consider verifying with official sources; Spoken content in regional languages could be more detailed"
+    },
+    "national-bamboo-mission-nation": {
+      "pass": true,
+      "detail": "quality=medium, issues=2"
+    },
+    "national-bamboo-mission-nation_issues": {
+      "pass": true,
+      "detail": "Embedding text mentions '0 rupees' which is inconsistent with spoken content mentioning 50-75% subsidy; Benefit amount is mentioned as 'N/A' but spoken content provides a specific percentage range"
+    },
+    "groq_high_quality": {
+      "pass": false,
+      "detail": "2/10 rated high quality"
+    }
+  }
+}
