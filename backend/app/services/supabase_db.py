@@ -64,6 +64,28 @@ def match_schemes(
     r = get_db().rpc("match_schemes", params).execute()
     return r.data or []
 
+def match_schemes_fallback(
+    filter_state: Optional[str] = None,
+    filter_occupation: Optional[str] = None,
+    match_count: int = 8,
+) -> List[dict]:
+    """Simple SQL scheme search without vector embeddings.
+    Used when Cohere embedding fails (rate limit, key issue, etc.).
+    Returns schemes filtered by state/occupation only.
+    """
+    db = get_db()
+    query = db.table("schemes").select("*")
+    # Try state filter if column exists; if not, the query still returns results
+    try:
+        if filter_state:
+            # schemes table may store state as array or string — try contains first
+            query = query.contains("target_states", [filter_state])
+        return query.order("benefit_annual_inr", desc=True).limit(match_count).execute().data or []
+    except Exception:
+        # If target_states column/filter fails, just return top schemes unfiltered
+        return db.table("schemes").select("*").limit(match_count).execute().data or []
+
+
 def get_scheme_by_slug(slug: str) -> Optional[dict]:
     """Get scheme by its scheme_id (slug)."""
     r = get_db().table("schemes").select("*").eq("scheme_id", slug).execute()

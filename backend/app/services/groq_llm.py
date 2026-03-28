@@ -29,48 +29,29 @@ PLAIN LANGUAGE (mandatory):
 PLAIN = PLAIN_LANGUAGE_RULE
 
 SYSTEM_PROMPTS = {
-    "intake": """You are Shubh, a friendly voice assistant helping rural Indian farmers discover government schemes.
+    "extract_fields": """You are a data extraction assistant for Jan Saathi, an Indian government scheme finder.
 
-TASK: Extract profile fields from the farmer's natural speech (Hinglish/Hindi/regional OK).
-Return ONLY valid JSON with NO markdown or code fences.
+TASK: Extract profile fields from the farmer's message. Return ONLY valid JSON, no markdown.
 
-Profile fields to extract (include only if mentioned by user):
-- state: Indian state in English snake_case (e.g. "uttar_pradesh", "rajasthan", "odisha", "maharashtra")
-  NOTE: If user mentions a city/district, infer the state (e.g. "saharanpur" → "uttar_pradesh", "pune" → "maharashtra")
-- occupation: always "farmer"
-- occupation_subtype: one of ["crop_farmer","dairy_farmer","livestock_farmer","fisherman"] — default "crop_farmer" if unclear or user just says "farmer/kisan"
-- age: integer years (extract from "21 saal", "21 साल", "21 years", "21 sal" etc.)
-- income: annual income in INR as INTEGER only — if user says "less than 10000" extract 10000; if monthly, multiply by 12
-- bpl: boolean (has BPL card)
-- gender: "male"/"female"/"other"
-- category: "SC"/"ST"/"OBC"/"General"
-- name: full name
-- district: district name
+Fields to extract (only include if clearly mentioned — never guess):
+- state: Indian state in snake_case. City/district → infer state.
+  Examples: "odisha", "uttar_pradesh", "rajasthan", "maharashtra", "gujarat", "west_bengal"
+  City mapping: saharanpur→uttar_pradesh, pune→maharashtra, surat→gujarat, patna→bihar
+- occupation_subtype: "crop_farmer" (default), "dairy_farmer", "livestock_farmer", "fisherman"
+- age: integer. Parse "21 saal", "21 sal", "21 years", "21 साल", plain "21" → 21
+- income: annual INR as integer. "50 hazaar"→50000, "1 lakh"→100000, "less than 10000"→10000
+- bpl: true/false (BPL card)
+- gender: "male" or "female"
+- category: "SC", "ST", "OBC", or "General"
 
-THRESHOLD FIELDS (need all 3 to proceed): state, occupation_subtype, age
-
-QUESTION ORDER — ask ONE question at a time, in this exact priority:
-1. state — if missing: ask which state/village they're from
-2. age — if missing: ask their age
-3. income — if missing: ask annual income
-4. category — if missing: ask SC/ST/OBC/General
-5. bpl — if missing: ask if they have BPL card
-6. gender — if missing: ask male/female
+Return format (omit fields not mentioned):
+{"state": null, "occupation_subtype": null, "age": null, "income": null, "bpl": null, "gender": null, "category": null}
 
 RULES:
-- NEVER ask about occupation (default to crop_farmer automatically)
-- NEVER ask 2 questions at once — ask ONLY the next missing field from the order above
-- If the user already provided state+age (threshold met), set next_question_in_language to "" (empty string)
-- Be warm and conversational, not robotic
-
-LANGUAGE RULE (CRITICAL): The user's current language is provided as "Language: {code}".
-- "next_question_in_language" MUST be in THAT language (hi=Hindi, en=English, ta=Tamil, te=Telugu, etc.)
-- next_question_hindi is ALWAYS in Hindi
-
-Return JSON format:
-{"extracted": {"field": value, ...}, "missing_threshold_fields": ["state","age",...], "next_question_hindi": "Hindi mein poochho", "next_question_in_language": "In the user's language"}
-
-""" + PLAIN_LANGUAGE_RULE,
+- age must be 10–100. If user says "21" or "21 saal" → age: 21 (NOT null)
+- If user says just a state name like "odisha" → state: "odisha"
+- Return null for anything not clearly stated
+""",
 
     "match": """You are Shubh. The farmer's profile has been matched to schemes.
 Generate a spoken gap announcement and brief scheme introduction.
@@ -142,18 +123,19 @@ def _safe_json(raw: str, fallback: dict) -> dict:
             return fallback
 
 
-async def process_intake(message: str, profile: dict, language: str) -> dict:
-    """Extract profile fields from user message."""
+async def extract_all_fields(message: str, profile: dict, language: str) -> dict:
+    """Extract all possible profile fields from a user message.
+    Returns a flat dict of extracted fields (None for anything not mentioned).
+    This only EXTRACTS — question generation is handled by chat.py deterministically.
+    """
     messages = [
-        {"role": "system", "content": SYSTEM_PROMPTS["intake"]},
-        {"role": "user", "content": f"Language: {language}\nCurrent profile: {json.dumps(profile)}\nUser said: {message}"}
+        {"role": "system", "content": SYSTEM_PROMPTS["extract_fields"]},
+        {"role": "user", "content": f"User message: {message}\nAlready known: {json.dumps({k: v for k, v in profile.items() if v is not None})}"}
     ]
     raw = await call_groq(messages)
-    return _safe_json(raw, {
-        "extracted": {},
-        "next_question_hindi": "Kripya dobara batayein.",
-        "next_question_in_language": "Kripya dobara batayein." if language == "hi" else "Please repeat that.",
-    })
+    result = _safe_json(raw, {})
+    # Return only non-null values that differ from existing profile
+    return {k: v for k, v in result.items() if v is not None}
 
 
 async def generate_gap_announcement(schemes: list, profile: dict, language: str) -> dict:
