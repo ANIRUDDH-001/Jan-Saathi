@@ -12,7 +12,7 @@ vi.mock('motion/react', () => {
       return React.createElement(tag, { ...rest, ref }, children);
     });
   return {
-    motion: { div: motionTag('div'), span: motionTag('span'), button: motionTag('button'), p: motionTag('p'), img: motionTag('img') },
+    motion: { div: motionTag('div'), span: motionTag('span'), button: motionTag('button'), p: motionTag('p'), img: motionTag('img'), ellipse: motionTag('ellipse'), g: motionTag('g'), path: motionTag('path'), svg: motionTag('svg'), circle: motionTag('circle') },
     AnimatePresence: ({ children }: any) => children,
     useMotionValue: () => ({ get: () => 0, set: () => {} }),
     useTransform: () => 0,
