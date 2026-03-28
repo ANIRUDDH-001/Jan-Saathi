@@ -15,12 +15,15 @@ export function LanguageDetectionBanner({ detectedLang, visible, onClose }: Lang
 
   useEffect(() => {
     if (visible) {
-      setShow(true);
-      const timer = setTimeout(() => {
+      const timer1 = setTimeout(() => setShow(true), 0);
+      const timer2 = setTimeout(() => {
         setShow(false);
         onClose();
       }, 3000);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+      };
     }
   }, [visible, onClose]);
 

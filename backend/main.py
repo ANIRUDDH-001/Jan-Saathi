@@ -4,6 +4,9 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from app.config import get_settings
 from app.routers import chat, voice, schemes, applications, auth, admin
 
@@ -20,10 +23,12 @@ def _normalize_origin(url: str) -> str:
 
 allowed_origins = {
     _normalize_origin(settings.frontend_url),
+    "http://localhost:3000",
     "http://localhost:5173",
     "https://jan-saathi.vercel.app",
 }
 allowed_origins.discard("")
+
 
 app = FastAPI(
     title="Jan Saathi API",
@@ -31,18 +36,26 @@ app = FastAPI(
     version="1.0.0"
 )
 
+from app.limiter import limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        correlation_id = request.headers.get("X-Correlation-ID", str(uuid.uuid4()))
+        correlation_id = request.headers.get("X-Correlation-ID", str(uuid.uuid4())[:8])
+        request.state.correlation_id = correlation_id
         start = time.monotonic()
+        
+        ip_addr = request.client.host if request.client else 'unknown'
+        logger.info(f"[{correlation_id}] {request.method} {request.url.path} | ip={ip_addr}")
+        
         try:
             response = await call_next(request)
             duration_ms = int((time.monotonic() - start) * 1000)
             logger.info(
-                f"{request.method} {request.url.path} "
-                f"status={response.status_code} duration={duration_ms}ms "
-                f"corr={correlation_id}"
+                f"[{correlation_id}] → {response.status_code} | {duration_ms}ms"
             )
             response.headers["X-Correlation-ID"] = correlation_id
             return response
@@ -54,7 +67,16 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             )
             raise
 
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
 
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
 
 # Keep CORS as the outermost app middleware so headers are added for all responses,
@@ -63,8 +85,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=sorted(allowed_origins),
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Correlation-ID"],
+    max_age=600,
 )
 
 app.include_router(chat.router,         prefix="/api/chat",         tags=["chat"])

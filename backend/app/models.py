@@ -1,15 +1,29 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, validator, Field
+import re
 from typing import Optional, List, Dict, Any
 
 # --- Request models ---
 
 class ChatRequest(BaseModel):
-    message: str
-    session_id: str
-    language: str = "hi"
+    message: str = Field(..., min_length=0, max_length=1000)
+    session_id: str = Field(..., min_length=1, max_length=100)
+    language: str = Field(default="hi", pattern="^[a-z]{2}$")
+
+    @validator('message')
+    def sanitize_message(cls, v):
+        v = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', v)
+        return v.strip()
+    
+    @validator('session_id')
+    def validate_session_id(cls, v):
+        v = v.strip()
+        if not re.match(r'^[a-zA-Z0-9\-]+$', v):
+            raise ValueError('Invalid session_id format')
+        return v
 
 class VoiceRequest(BaseModel):
     session_id: str
+    language_hint: str = Field(default="hi-IN", pattern="^[a-z]{2}-[A-Z]{2}$")
     # Audio sent as multipart form-data separately
 
 class ApplyRequest(BaseModel):

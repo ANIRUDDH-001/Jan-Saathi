@@ -9,16 +9,29 @@ function authHeader(): Record<string, string> {
 }
 
 // ── Chat ──────────────────────────────────────────────────────────────────────
+let isChatPending = false;
+let lastChatTime = 0;
+
 export async function sendChatMessage(
   message: string, sessionId: string, language = 'hi'
 ): Promise<ChatResponse> {
-  const r = await fetch(`${BASE}/api/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeader() },
-    body: JSON.stringify({ message, session_id: sessionId, language }),
-  });
-  if (!r.ok) throw new Error(`chat:${r.status}`);
-  return r.json();
+  const now = Date.now();
+  if (isChatPending || now - lastChatTime < 1000) {
+    return Promise.reject(new Error('Rate limit: please wait before sending another message.'));
+  }
+  isChatPending = true;
+  lastChatTime = now;
+  try {
+    const r = await fetch(`${BASE}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeader() },
+      body: JSON.stringify({ message, session_id: sessionId, language }),
+    });
+    if (!r.ok) throw new Error(`chat:${r.status}`);
+    return await r.json();
+  } finally {
+    isChatPending = false;
+  }
 }
 
 export async function detectLocation(): Promise<{ state: string|null; city: string|null; detected: boolean }> {

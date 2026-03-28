@@ -23,10 +23,13 @@ export function Profile() {
     gender:     profile.gender     || '',
   });
 
-  if (!isLoggedIn) {
-    router.push('/');
-    return null;
-  }
+  React.useEffect(() => {
+    if (!isLoggedIn) {
+      router.push('/');
+    }
+  }, [isLoggedIn, router]);
+
+  if (!isLoggedIn) return null;
 
   const fields = [
     { key: 'state' as const, label: t('profile.state') },

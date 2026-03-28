@@ -14,7 +14,7 @@ interface ProfileCardProps {
   isExtracting?: boolean;
 }
 
-export function ProfileCard({ fields, isExtracting }: ProfileCardProps) {
+export function ProfileCard({ fields }: ProfileCardProps) {
   const { t, lang } = useLang();
   const [justExtracted, setJustExtracted] = useState<string[]>([]);
 
@@ -25,14 +25,21 @@ export function ProfileCard({ fields, isExtracting }: ProfileCardProps) {
       .map(f => f.key);
     
     if (newlyFilled.length > 0) {
-      setJustExtracted(prev => [...prev, ...newlyFilled]);
+      const timer1 = setTimeout(() => {
+        setJustExtracted(prev => [...prev, ...newlyFilled]);
+      }, 0);
       
       // Remove from justExtracted after animation
-      setTimeout(() => {
+      const timer2 = setTimeout(() => {
         setJustExtracted(prev => prev.filter(k => !newlyFilled.includes(k)));
       }, 1500);
+
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+      };
     }
-  }, [fields]);
+  }, [fields, justExtracted]);
 
   const completedCount = fields.filter(f => f.value).length;
   const totalCount = fields.length;

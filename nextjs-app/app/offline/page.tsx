@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function OfflinePage() {
   return (
     <div className="flex flex-col items-center justify-center h-screen gap-6 bg-[#000020]">
@@ -7,12 +9,12 @@ export default function OfflinePage() {
           Network nahi hai. Cached yojanaein dekh sakte hain.
         </p>
       </div>
-      <a 
+      <Link 
         href="/schemes"
         className="px-6 py-3 rounded-full bg-[#FF9933] text-white font-semibold"
       >
         Cached Yojanaein Dekhein
-      </a>
+      </Link>
     </div>
   );
 }

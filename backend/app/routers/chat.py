@@ -17,6 +17,7 @@ from app.services import groq_llm as llm
 from app.services import cohere_embed as embed
 from app.services import sarvam
 from app.config import get_settings
+from app.limiter import limiter
 
 router = APIRouter()
 
@@ -227,6 +228,7 @@ async def _do_scheme_matching(profile: dict, session_id: str, language: str):
 
 
 @router.post("", response_model=ChatResponse)
+@limiter.limit("30/minute")
 async def chat(req: ChatRequest, request: Request):
     session = db.get_or_create_session(req.session_id)
     profile = session.get("profile", {})

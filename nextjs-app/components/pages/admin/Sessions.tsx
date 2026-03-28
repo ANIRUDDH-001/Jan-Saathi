@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -9,6 +10,16 @@ export function Sessions() {
   const { t } = useLang();
   const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [fakeCombos] = useState(() => 
+    ['Farmer × UP', 'Daily wage × Bihar', 'Homemaker × Rajasthan', 'Student × Maharashtra', 'Laborer × MP']
+    .map(c => ({ label: c, count: Math.floor(Math.random() * 200 + 50) }))
+  );
+  
+  const [fakeSchemes] = useState(() => 
+    ['PM-KISAN', 'Ayushman Bharat', 'MGNREGA', 'PM Awas', 'Ujjwala']
+    .map(c => ({ label: c, count: Math.floor(Math.random() * 100 + 20) }))
+  );
 
   useEffect(() => {
     getAdminSessions(50)
@@ -52,17 +63,17 @@ export function Sessions() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ fontSize: '0.85rem' }}>
           <div>
             <p className="text-muted-foreground mb-2" style={{ fontSize: '0.75rem' }}>Top Occupation + State combos</p>
-            {['Farmer × UP', 'Daily wage × Bihar', 'Homemaker × Rajasthan', 'Student × Maharashtra', 'Laborer × MP'].map((c, i) => (
+            {fakeCombos.map((c, i) => (
               <div key={i} className="flex items-center justify-between py-1.5 border-b border-border/30">
-                <span>{c}</span><span className="text-muted-foreground">{Math.floor(Math.random() * 200 + 50)}</span>
+                <span>{c.label}</span><span className="text-muted-foreground">{c.count}</span>
               </div>
             ))}
           </div>
           <div>
             <p className="text-muted-foreground mb-2" style={{ fontSize: '0.75rem' }}>Most asked schemes</p>
-            {['PM-KISAN', 'Ayushman Bharat', 'MGNREGA', 'PM Awas', 'Ujjwala'].map((c, i) => (
+            {fakeSchemes.map((c, i) => (
               <div key={i} className="flex items-center justify-between py-1.5 border-b border-border/30">
-                <span>{c}</span><span className="text-muted-foreground">{Math.floor(Math.random() * 100 + 20)}</span>
+                <span>{c.label}</span><span className="text-muted-foreground">{c.count}</span>
               </div>
             ))}
           </div>

@@ -17,12 +17,23 @@ GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
 def create_jwt(user_id: str, email: str, role: str) -> str:
     expire = datetime.utcnow() + timedelta(minutes=settings.jwt_expire_minutes)
     return jwt.encode(
-        {"sub": user_id, "email": email, "role": role, "exp": expire},
+        {
+            "sub": user_id, 
+            "email": email, 
+            "role": role, 
+            "exp": expire, 
+            "iss": "jan-saathi"
+        },
         settings.jwt_secret, algorithm=settings.jwt_algorithm
     )
 
 def decode_jwt(token: str) -> dict:
-    return jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+    return jwt.decode(
+        token,
+        settings.jwt_secret,
+        algorithms=[settings.jwt_algorithm],
+        options={"verify_iss": True, "iss": "jan-saathi"},
+    )
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security)

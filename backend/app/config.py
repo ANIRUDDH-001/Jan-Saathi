@@ -3,7 +3,8 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     supabase_url: str
-    supabase_anon_key: str
+    # Not required for backend runtime paths used in tests (service role key is used).
+    supabase_anon_key: str = ""
     supabase_service_role_key: str
     groq_api_key: str
     groq_primary_model: str = "meta-llama/llama-4-scout-17b-16e-instruct"

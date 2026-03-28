@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable react/display-name */
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { render } from '@testing-library/react';

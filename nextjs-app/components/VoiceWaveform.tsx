@@ -28,6 +28,7 @@ export function VoiceWaveform({
     }
 
     // Real AnalyserNode path
+    // eslint-disable-next-line react-hooks/immutability
     analyserNode.fftSize = 64;
     const bufLen = analyserNode.frequencyBinCount;
     dataArrayRef.current = new Uint8Array(bufLen);

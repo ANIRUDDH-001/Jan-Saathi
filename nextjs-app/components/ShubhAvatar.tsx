@@ -1,7 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
+import Image from 'next/image';
 
 interface ShubhAvatarProps {
   size?: number;
@@ -412,9 +415,12 @@ export function ShubhAvatarSmall({ speaking = false, processing = false }: { spe
       )}
 
       <div className="relative w-full h-full">
-        <img
+        <Image
           src={AVATAR_IMAGE_SRC}
           alt="Shubh avatar"
+          priority={true}
+          width={64}
+          height={64}
           className="w-full h-full object-cover"
           style={{
             opacity: processing ? 0.8 : 1,

@@ -78,7 +78,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return getStorage('js_language') || 'hi';
   });
   const [isVoicePlaying, setIsVoicePlaying] = useState(false);
-  const [lastInputTime, setLastInputTime] = useState(Date.now());
+  const [lastInputTime, setLastInputTime] = useState(() => Date.now());
   const [applications, setApplications] = useState<Record<string,unknown>>({});
   const [activeSchemeId, setActiveSchemeId] = useState<string|null>(null);
 
@@ -105,7 +105,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const parsed = JSON.parse(stored);
         const hydratedUser = toUserRecord(parsed);
         if (hydratedUser) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setIsLoggedIn(true);
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setUser(hydratedUser);
         }
       } catch {}

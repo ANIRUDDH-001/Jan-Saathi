@@ -1,0 +1,181 @@
+D:\Jan Saathi\nextjs-app\app\offline\page.tsx:10:7 Do not use an `<a>` element to navigate to `/schemes/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages (@next/next/no-html-link-for-pages)
+D:\Jan Saathi\nextjs-app\auth.ts:23:26 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\AnimatedInput.tsx:20:9 Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Jan Saathi\nextjs-app\components\AnimatedInput.tsx:20:9
+  18 |     useEffect(() => {
+  19 |       if (error) {
+> 20 |         setShowError(true);
+     |         ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  21 |         const timer = setTimeout(() => setShowError(false), 400);
+  22 |         return () => clearTimeout(timer);
+  23 |       } (react-hooks/set-state-in-effect)
+D:\Jan Saathi\nextjs-app\components\LanguageDetectionBanner.tsx:18:7 Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Jan Saathi\nextjs-app\components\LanguageDetectionBanner.tsx:18:7
+  16 |   useEffect(() => {
+  17 |     if (visible) {
+> 18 |       setShow(true);
+     |       ^^^^^^^ Avoid calling setState() directly within an effect
+  19 |       const timer = setTimeout(() => {
+  20 |         setShow(false);
+  21 |         onClose(); (react-hooks/set-state-in-effect)
+D:\Jan Saathi\nextjs-app\components\ProfileCard.tsx:17:39 'isExtracting' is defined but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\components\ProfileCard.tsx:28:7 Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Jan Saathi\nextjs-app\components\ProfileCard.tsx:28:7
+  26 |     
+  27 |     if (newlyFilled.length > 0) {
+> 28 |       setJustExtracted(prev => [...prev, ...newlyFilled]);
+     |       ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  29 |       
+  30 |       // Remove from justExtracted after animation
+  31 |       setTimeout(() => { (react-hooks/set-state-in-effect)
+D:\Jan Saathi\nextjs-app\components\ProfileCard.tsx:35:6 React Hook useEffect has a missing dependency: 'justExtracted'. Either include it or remove the dependency array. (react-hooks/exhaustive-deps)
+D:\Jan Saathi\nextjs-app\components\ShubhAvatar.tsx:105:14 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\ShubhAvatar.tsx:118:18 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\ShubhAvatar.tsx:137:18 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\ShubhAvatar.tsx:155:18 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\ShubhAvatar.tsx:175:18 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\ShubhAvatar.tsx:396:16 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\ShubhAvatar.tsx:409:16 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\ShubhAvatar.tsx:528:16 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\ShubhAvatar.tsx:540:16 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\VoiceWaveform.tsx:31:5 Error: This value cannot be modified
+
+Modifying component props or hook arguments is not allowed. Consider using a local variable instead.
+
+D:\Jan Saathi\nextjs-app\components\VoiceWaveform.tsx:31:5
+  29 |
+  30 |     // Real AnalyserNode path
+> 31 |     analyserNode.fftSize = 64;
+     |     ^^^^^^^^^^^^ `analyserNode` cannot be modified
+  32 |     const bufLen = analyserNode.frequencyBinCount;
+  33 |     dataArrayRef.current = new Uint8Array(bufLen);
+  34 | (react-hooks/immutability)
+D:\Jan Saathi\nextjs-app\components\layout\Footer.tsx:18:11 `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`. (react/no-unescaped-entities)
+D:\Jan Saathi\nextjs-app\components\layout\Footer.tsx:18:33 `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`. (react/no-unescaped-entities)
+D:\Jan Saathi\nextjs-app\components\pages\AudioEntry.tsx:4:21 'useParams' is defined but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\components\pages\AudioEntry.tsx:4:32 'useSearchParams' is defined but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\components\pages\AudioEntry.tsx:5:8 'Link' is defined but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\components\pages\AudioEntry.tsx:19:11 'sessionId' is assigned a value but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\components\pages\AudioEntry.tsx:101:63 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\AudioEntry.tsx:123:22 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\AudioEntry.tsx:309:54 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\Chat.tsx:4:21 'useParams' is defined but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\components\pages\Chat.tsx:4:32 'useSearchParams' is defined but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\components\pages\Chat.tsx:5:8 'Link' is defined but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\components\pages\Chat.tsx:44:54 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\Chat.tsx:99:10 'detectedLang' is assigned a value but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\components\pages\Chat.tsx:173:63 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\Chat.tsx:300:14 'err' is defined but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\components\pages\Chat.tsx:327:38 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\Chat.tsx:329:44 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\Chat.tsx:331:25 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\Chat.tsx:339:3 Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps'). (null)
+D:\Jan Saathi\nextjs-app\components\pages\Landing.tsx:4:21 'useParams' is defined but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\components\pages\Landing.tsx:4:32 'useSearchParams' is defined but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\components\pages\Landing.tsx:5:8 'Link' is defined but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\components\pages\Landing.tsx:7:10 'Mic' is defined but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\components\pages\Landing.tsx:12:10 'AnimatedButton' is defined but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\components\pages\Landing.tsx:13:10 'AnimatedCard' is defined but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\components\pages\Landing.tsx:24:54 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\Schemes.tsx:4:21 'useParams' is defined but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\components\pages\Schemes.tsx:4:32 'useSearchParams' is defined but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\components\pages\Schemes.tsx:18:57 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\Schemes.tsx:69:10 'currentStepIndex' is assigned a value but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\components\pages\Schemes.tsx:69:28 'setCurrentStepIndex' is assigned a value but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\components\pages\Schemes.tsx:92:6 React Hook useEffect has missing dependencies: 'contextSchemes', 'lang', and 'profile.state'. Either include them or remove the dependency array. (react-hooks/exhaustive-deps)
+D:\Jan Saathi\nextjs-app\components\pages\Track.tsx:15:40 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\Track.tsx:18:50 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\Track.tsx:34:42 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\admin\AdminSchemes.tsx:9:26 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\admin\AdminUsers.tsx:10:44 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\admin\Dashboard.tsx:10:7 'apiIntegrations' is assigned a value but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\components\pages\admin\Dashboard.tsx:51:48 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\admin\Dashboard.tsx:52:52 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\admin\Dashboard.tsx:120:40 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\admin\Dashboard.tsx:189:37 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\admin\Dashboard.tsx:215:61 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\admin\Dashboard.tsx:242:69 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\admin\Pipeline.tsx:18:38 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\admin\Pipeline.tsx:20:52 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\admin\Pipeline.tsx:35:5 Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Jan Saathi\nextjs-app\components\pages\admin\Pipeline.tsx:35:5
+  33 |
+  34 |   useEffect(() => {
+> 35 |     fetchIntegrations();
+     |     ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  36 |     // Auto-refresh every 30 seconds
+  37 |     const interval = setInterval(fetchIntegrations, 30000);
+  38 |     return () => clearInterval(interval); (react-hooks/set-state-in-effect)
+D:\Jan Saathi\nextjs-app\components\pages\admin\Pipeline.tsx:75:37 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\admin\Sessions.tsx:10:44 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+D:\Jan Saathi\nextjs-app\components\pages\admin\Sessions.tsx:57:85 Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+D:\Jan Saathi\nextjs-app\components\pages\admin\Sessions.tsx:57:85
+  55 |             {['Farmer × UP', 'Daily wage × Bihar', 'Homemaker × Rajasthan', 'Student × Maharashtra', 'Laborer × MP'].map((c, i) => (
+  56 |               <div key={i} className="flex items-center justify-between py-1.5 border-b border-border/30">
+> 57 |                 <span>{c}</span><span className="text-muted-foreground">{Math.floor(Math.random() * 200 + 50)}</span>
+     |                                                                                     ^^^^^^^^^^^^^ Cannot call impure function
+  58 |               </div>
+  59 |             ))}
+  60 |           </div> (react-hooks/purity)
+D:\Jan Saathi\nextjs-app\components\pages\admin\Sessions.tsx:65:85 Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+D:\Jan Saathi\nextjs-app\components\pages\admin\Sessions.tsx:65:85
+  63 |             {['PM-KISAN', 'Ayushman Bharat', 'MGNREGA', 'PM Awas', 'Ujjwala'].map((c, i) => (
+  64 |               <div key={i} className="flex items-center justify-between py-1.5 border-b border-border/30">
+> 65 |                 <span>{c}</span><span className="text-muted-foreground">{Math.floor(Math.random() * 100 + 20)}</span>
+     |                                                                                     ^^^^^^^^^^^^^ Cannot call impure function
+  66 |               </div>
+  67 |             ))}
+  68 |           </div> (react-hooks/purity)
+D:\Jan Saathi\nextjs-app\context\AppContext.tsx:81:54 Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+D:\Jan Saathi\nextjs-app\context\AppContext.tsx:81:54
+  79 |   });
+  80 |   const [isVoicePlaying, setIsVoicePlaying] = useState(false);
+> 81 |   const [lastInputTime, setLastInputTime] = useState(Date.now());
+     |                                                      ^^^^^^^^^^ Cannot call impure function
+  82 |   const [applications, setApplications] = useState<Record<string,unknown>>({});
+  83 |   const [activeSchemeId, setActiveSchemeId] = useState<string|null>(null);
+  84 | (react-hooks/purity)
+D:\Jan Saathi\nextjs-app\next.config.ts:4:28 A `require()` style import is forbidden. (@typescript-eslint/no-require-imports)
+D:\Jan Saathi\nextjs-app\tests\unit\ShubhAvatar.test.tsx:8:10 Component definition is missing display name (react/display-name)
+D:\Jan Saathi\nextjs-app\tests\unit\ShubhAvatar.test.tsx:8:30 'animate' is defined but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\tests\unit\ShubhAvatar.test.tsx:8:39 'transition' is defined but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\tests\unit\VoiceWaveform.test.tsx:3:18 'act' is defined but never used. (@typescript-eslint/no-unused-vars)
+D:\Jan Saathi\nextjs-app\tests\unit\VoiceWaveform.test.tsx:9:10 Component definition is missing display name (react/display-name)
+D:\Jan Saathi\nextjs-app\tests\unit\VoiceWaveform.test.tsx:9:39 'transition' is defined but never used. (@typescript-eslint/no-unused-vars)

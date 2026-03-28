@@ -1,6 +1,11 @@
 import withPWA from '@ducanh2912/next-pwa';
 import type { NextConfig } from 'next';
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -36,7 +41,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withPWA({
+export default withBundleAnalyzer(withPWA({
   dest: 'public',
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: true,
@@ -81,4 +86,4 @@ export default withPWA({
       },
     ],
   },
-})(nextConfig);
+})(nextConfig));

@@ -1,12 +1,16 @@
 """Voice router — STT and TTS endpoints."""
 from fastapi import APIRouter, UploadFile, File, Form
 from app.services import sarvam
+from app.limiter import limiter
+from fastapi import Request
 
 router = APIRouter()
 
 
 @router.post("/transcribe")
+@limiter.limit("20/minute")
 async def transcribe_audio(
+    request: Request,
     audio: UploadFile = File(...),
     language_hint: str = Form(default="hi-IN"),
     session_id: str = Form(default=""),

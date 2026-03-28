@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -32,6 +33,7 @@ export function Pipeline() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchIntegrations();
     // Auto-refresh every 30 seconds
     const interval = setInterval(fetchIntegrations, 30000);

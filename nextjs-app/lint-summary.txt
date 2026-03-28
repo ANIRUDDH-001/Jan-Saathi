@@ -1,0 +1,153 @@
+undefined:10 Do not use an `<a>` element to navigate to `/schemes/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages (@next/next/no-html-link-for-pages)
+undefined:23 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:20 Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Jan Saathi\nextjs-app\components\AnimatedInput.tsx:20:9
+  18 |     useEffect(() => {
+  19 |       if (error) {
+> 20 |         setShowError(true);
+     |         ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  21 |         const timer = setTimeout(() => setShowError(false), 400);
+  22 |         return () => clearTimeout(timer);
+  23 |       } (react-hooks/set-state-in-effect)
+undefined:18 Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Jan Saathi\nextjs-app\components\LanguageDetectionBanner.tsx:18:7
+  16 |   useEffect(() => {
+  17 |     if (visible) {
+> 18 |       setShow(true);
+     |       ^^^^^^^ Avoid calling setState() directly within an effect
+  19 |       const timer = setTimeout(() => {
+  20 |         setShow(false);
+  21 |         onClose(); (react-hooks/set-state-in-effect)
+undefined:28 Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Jan Saathi\nextjs-app\components\ProfileCard.tsx:28:7
+  26 |     
+  27 |     if (newlyFilled.length > 0) {
+> 28 |       setJustExtracted(prev => [...prev, ...newlyFilled]);
+     |       ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  29 |       
+  30 |       // Remove from justExtracted after animation
+  31 |       setTimeout(() => { (react-hooks/set-state-in-effect)
+undefined:105 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:118 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:137 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:155 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:175 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:396 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:409 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:528 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:540 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:31 Error: This value cannot be modified
+
+Modifying component props or hook arguments is not allowed. Consider using a local variable instead.
+
+D:\Jan Saathi\nextjs-app\components\VoiceWaveform.tsx:31:5
+  29 |
+  30 |     // Real AnalyserNode path
+> 31 |     analyserNode.fftSize = 64;
+     |     ^^^^^^^^^^^^ `analyserNode` cannot be modified
+  32 |     const bufLen = analyserNode.frequencyBinCount;
+  33 |     dataArrayRef.current = new Uint8Array(bufLen);
+  34 | (react-hooks/immutability)
+undefined:18 `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`. (react/no-unescaped-entities)
+undefined:18 `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`. (react/no-unescaped-entities)
+undefined:101 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:123 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:309 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:44 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:173 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:327 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:329 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:331 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:24 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:18 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:15 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:18 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:34 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:9 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:10 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:51 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:52 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:120 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:189 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:215 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:242 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:18 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:20 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:35 Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Jan Saathi\nextjs-app\components\pages\admin\Pipeline.tsx:35:5
+  33 |
+  34 |   useEffect(() => {
+> 35 |     fetchIntegrations();
+     |     ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  36 |     // Auto-refresh every 30 seconds
+  37 |     const interval = setInterval(fetchIntegrations, 30000);
+  38 |     return () => clearInterval(interval); (react-hooks/set-state-in-effect)
+undefined:75 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:10 Unexpected any. Specify a different type. (@typescript-eslint/no-explicit-any)
+undefined:57 Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+D:\Jan Saathi\nextjs-app\components\pages\admin\Sessions.tsx:57:85
+  55 |             {['Farmer × UP', 'Daily wage × Bihar', 'Homemaker × Rajasthan', 'Student × Maharashtra', 'Laborer × MP'].map((c, i) => (
+  56 |               <div key={i} className="flex items-center justify-between py-1.5 border-b border-border/30">
+> 57 |                 <span>{c}</span><span className="text-muted-foreground">{Math.floor(Math.random() * 200 + 50)}</span>
+     |                                                                                     ^^^^^^^^^^^^^ Cannot call impure function
+  58 |               </div>
+  59 |             ))}
+  60 |           </div> (react-hooks/purity)
+undefined:65 Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+D:\Jan Saathi\nextjs-app\components\pages\admin\Sessions.tsx:65:85
+  63 |             {['PM-KISAN', 'Ayushman Bharat', 'MGNREGA', 'PM Awas', 'Ujjwala'].map((c, i) => (
+  64 |               <div key={i} className="flex items-center justify-between py-1.5 border-b border-border/30">
+> 65 |                 <span>{c}</span><span className="text-muted-foreground">{Math.floor(Math.random() * 100 + 20)}</span>
+     |                                                                                     ^^^^^^^^^^^^^ Cannot call impure function
+  66 |               </div>
+  67 |             ))}
+  68 |           </div> (react-hooks/purity)
+undefined:81 Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+D:\Jan Saathi\nextjs-app\context\AppContext.tsx:81:54
+  79 |   });
+  80 |   const [isVoicePlaying, setIsVoicePlaying] = useState(false);
+> 81 |   const [lastInputTime, setLastInputTime] = useState(Date.now());
+     |                                                      ^^^^^^^^^^ Cannot call impure function
+  82 |   const [applications, setApplications] = useState<Record<string,unknown>>({});
+  83 |   const [activeSchemeId, setActiveSchemeId] = useState<string|null>(null);
+  84 | (react-hooks/purity)
+undefined:4 A `require()` style import is forbidden. (@typescript-eslint/no-require-imports)
+undefined:8 Component definition is missing display name (react/display-name)
+undefined:9 Component definition is missing display name (react/display-name)

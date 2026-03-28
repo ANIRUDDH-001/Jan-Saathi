@@ -17,9 +17,12 @@ export const AnimatedInput = forwardRef<HTMLInputElement, AnimatedInputProps>(
 
     useEffect(() => {
       if (error) {
-        setShowError(true);
-        const timer = setTimeout(() => setShowError(false), 400);
-        return () => clearTimeout(timer);
+        const timer1 = setTimeout(() => setShowError(true), 0);
+        const timer2 = setTimeout(() => setShowError(false), 400);
+        return () => {
+          clearTimeout(timer1);
+          clearTimeout(timer2);
+        };
       }
     }, [error]);
 

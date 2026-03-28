@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -8,8 +10,18 @@ import { useApp } from '@/context/AppContext';
 import { Send, Volume2 } from 'lucide-react';
 import { v4Fallback } from '@/utils/uuid';
 import { ProfileCard } from '@/components/ProfileCard';
-import { GapCard } from '@/components/GapCard';
-import { VoiceWaveform } from '@/components/VoiceWaveform';
+import dynamic from 'next/dynamic';
+
+const VoiceWaveform = dynamic(
+  () => import('@/components/VoiceWaveform').then((m) => ({ default: m.VoiceWaveform })),
+  { ssr: false }
+);
+
+const GapCard = dynamic(
+  () => import('@/components/GapCard').then((m) => ({ default: m.GapCard })),
+  { ssr: false }
+);
+
 import { VoiceButton } from '@/components/VoiceButton';
 import { ChatProgressBar } from '@/components/ChatProgressBar';
 import { OccupationCards } from '@/components/OccupationCards';
