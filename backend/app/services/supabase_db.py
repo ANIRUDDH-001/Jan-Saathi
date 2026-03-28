@@ -156,3 +156,12 @@ def get_all_users(limit: int = 50) -> List[dict]:
         "created_at", desc=True
     ).limit(limit).execute()
     return r.data or []
+
+
+async def health_check() -> dict:
+    """Verify Supabase is reachable."""
+    try:
+        r = get_db().table("schemes").select("scheme_id").limit(1).execute()
+        return {"status": "ok", "connected": True}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}

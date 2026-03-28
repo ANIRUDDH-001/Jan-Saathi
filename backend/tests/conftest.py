@@ -87,10 +87,10 @@ def mock_db(monkeypatch):
 
 @pytest.fixture
 def mock_llm(monkeypatch):
-    """Mock Groq LLM calls — includes both function names (old + new)."""
+    """Mock Groq LLM calls — all async to match AsyncGroq implementation."""
     from app.services import groq_llm as llm
 
-    def _process_intake(*a, **k):
+    async def _process_intake(*a, **k):
         return {
             "extracted": {"state": "uttar_pradesh", "occupation_subtype": "crop_farmer", "age": 45},
             "threshold_ready": True,
@@ -99,26 +99,26 @@ def mock_llm(monkeypatch):
             "ready_to_match": True,
         }
 
-    def _not_ready_intake(*a, **k):
+    async def _generate_gap(*a, **k):
         return {
-            "extracted": {"state": "uttar_pradesh"},
-            "threshold_ready": False,
-            "next_question_hi": "Aapki umar kya hai?",
-            "next_question_in_language": "Aapki umar kya hai?",
-            "ready_to_match": False,
+            "gap_announcement": "Aapko ₹6,000 per saal mil sakta hai.",
+            "top_3_summary": "PM-KISAN se ₹6,000.",
+            "top3_spoken": "PM-KISAN se ₹6,000.",
         }
 
+    async def _generate_guidance(*a, **k):
+        return {
+            "reply": "PM-KISAN ke liye CSC jaana hai. Aadhaar aur passbook lekar jaana.",
+            "suggest_form_fill": False, "form_fill_prompt": None, "follow_up": None,
+        }
+
+    async def _generate_goodbye(*a, **k):
+        return "Aaj bahut kuch hua. Kal CSC jaana."
+
     monkeypatch.setattr(llm, "process_intake", _process_intake)
-    monkeypatch.setattr(llm, "generate_gap_announcement", lambda *a, **k: {
-        "gap_announcement": "Aapko ₹6,000 per saal mil sakta hai.",
-        "top_3_summary": "PM-KISAN se ₹6,000.",
-        "top3_spoken": "PM-KISAN se ₹6,000.",
-    })
-    monkeypatch.setattr(llm, "generate_scheme_guidance", lambda *a, **k: {
-        "reply": "PM-KISAN ke liye CSC jaana hai. Aadhaar aur passbook lekar jaana.",
-        "suggest_form_fill": False, "form_fill_prompt": None, "follow_up": None,
-    })
-    monkeypatch.setattr(llm, "generate_goodbye_summary", lambda *a, **k: "Aaj bahut kuch hua. Kal CSC jaana.")
+    monkeypatch.setattr(llm, "generate_gap_announcement", _generate_gap)
+    monkeypatch.setattr(llm, "generate_scheme_guidance", _generate_guidance)
+    monkeypatch.setattr(llm, "generate_goodbye_summary", _generate_goodbye)
     monkeypatch.setattr(llm, "classify_goodbye_intent", lambda msg: "bas" in msg.lower() or "bye" in msg.lower())
     monkeypatch.setattr(llm, "is_goodbye", lambda msg: "bas" in msg.lower() or "bye" in msg.lower())
     return llm
@@ -126,8 +126,17 @@ def mock_llm(monkeypatch):
 
 @pytest.fixture
 def mock_embed(monkeypatch):
+    """Mock Cohere embed — all async to match AsyncClientV2 implementation."""
     from app.services import cohere_embed as emb
-    monkeypatch.setattr(emb, "embed_query", lambda text: [0.1] * 1024)
+
+    async def _embed_query(text):
+        return [0.1] * 1024
+
+    async def _embed_profile_query(profile, language="hi"):
+        return [0.1] * 1024
+
+    monkeypatch.setattr(emb, "embed_query", _embed_query)
+    monkeypatch.setattr(emb, "embed_profile_query", _embed_profile_query)
     return emb
 
 

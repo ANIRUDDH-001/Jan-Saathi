@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pytest tests/test_health.py tests/test_chat.py tests/test_schemes.py -x -q)",
+      "Bash(python -c \"import cohere; print\\(dir\\(cohere\\)\\)\")",
+      "Bash(python -c \"import cohere; c = cohere.AsyncClient; print\\([m for m in dir\\(c\\) if ''embed'' in m.lower\\(\\)]\\)\")",
+      "Bash(python -c \"import inspect, cohere; print\\(inspect.signature\\(cohere.AsyncClient.embed\\)\\)\")",
+      "Bash(python -c \"import cohere; print\\([a for a in dir\\(cohere\\) if ''Client'' in a]\\)\")",
+      "Bash(python -c \"import cohere; r = cohere.types.EmbedResponse_EmbeddingsFloats; print\\(dir\\(r\\)\\)\")"
+    ]
+  }
+}

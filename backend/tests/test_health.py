@@ -4,7 +4,11 @@
 def test_health(client):
     r = client.get("/health")
     assert r.status_code == 200
-    assert r.json()["status"] == "ok"
+    data = r.json()
+    # Status is "ok" when all services respond, "degraded" in test/CI without real keys
+    assert data["status"] in ("ok", "degraded")
+    assert "services" in data
+    assert "version" in data
 
 
 def test_root(client):

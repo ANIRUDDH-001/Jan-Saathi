@@ -62,3 +62,14 @@ async def text_to_speech(text: str, language_code: str = "hi-IN") -> str:
     data = response.json()
     audios = data.get("audios", [])
     return audios[0] if audios else ""
+
+
+async def health_check() -> dict:
+    """Verify Sarvam API is reachable."""
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            r = await client.get(f"{BASE}/", headers=HEADERS)
+            # Any response (including 404) means API is reachable
+            return {"status": "ok", "http_status": r.status_code}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}

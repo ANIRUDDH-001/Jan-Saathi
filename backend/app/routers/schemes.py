@@ -19,7 +19,7 @@ async def list_schemes(state: str = None, limit: int = 20):
 @router.get("/search")
 async def search_schemes(q: str = Query(...), state: str = None):
     """Semantic search for schemes."""
-    query_embedding = embed.embed_query(q)
+    query_embedding = await embed.embed_query(q)
     return db.match_schemes(
         query_embedding, match_threshold=0.5,
         filter_state=state, match_count=6

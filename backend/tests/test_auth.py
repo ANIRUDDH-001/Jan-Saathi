@@ -60,16 +60,22 @@ class TestAdminAccess:
                        headers={"Authorization": f"Bearer {token}"})
         assert r.status_code == 403
 
-    def test_integrations_panel_returns_3_apis(self, client):
-        """Admin integrations panel returns exactly 3 API entries."""
+    def test_integrations_panel_returns_services(self, client):
+        """Admin integrations panel returns health status for all 4 services."""
         from app.routers.auth import create_jwt
         token = create_jwt("admin-uid", "aniruddhvijay2k7@gmail.com", "admin")
         r = client.get("/api/admin/integrations",
                        headers={"Authorization": f"Bearer {token}"})
         assert r.status_code == 200
         d = r.json()
-        assert "apis" in d
-        assert len(d["apis"]) == 3
-        names = [a["name"] for a in d["apis"]]
-        assert "MyScheme API" in names
-        assert "PM-KISAN Beneficiary Status" in names
+        assert "services" in d
+        assert len(d["services"]) == 4
+        names = [s["name"] for s in d["services"]]
+        assert "groq" in names
+        assert "cohere" in names
+        assert "sarvam" in names
+        assert "supabase" in names
+        for svc in d["services"]:
+            assert "status" in svc
+            assert "latency_ms" in svc
+            assert svc["status"] in ("ok", "error")
