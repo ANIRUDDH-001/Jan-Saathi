@@ -69,7 +69,7 @@ export function VedEntry() {
         transition={{ duration: 0.8, ease: 'easeOut' }}
       >
         <VedAvatar
-          size={180}
+          size={400}
           speaking={vedState === 'speaking'}
           listening={vedState === 'listening'}
           showLabel

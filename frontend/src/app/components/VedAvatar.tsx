@@ -17,12 +17,12 @@ const AVATAR_IMAGE_SRC = '/assets/ved_avatar_cutout.png';
 const F = {
   width: 380,
   height: 422,
-  lex: 162,
-  ley: 115,
-  rex: 214,
-  rey: 113,
-  mx: 190,
-  my: 155,
+  lex: 169.7,
+  ley: 114.1,
+  rex: 206.7,
+  rey: 113.1,
+  mx: 187,
+  my: 148,
   eyePatchRx: 9.6,
   eyePatchRy: 5.8,
   mouthPatchRx: 13,
@@ -30,7 +30,7 @@ const F = {
   eyeRx: 6.6,
   eyeRy: 4.8,
   pupilRx: 2.8,
-  pupilRy: 3.0,
+  pupilRy: 3,
   blinkHalfWidth: 5,
   lipStroke: '#7B3A23',
   mouthFill: '#6F2B19',
@@ -87,14 +87,15 @@ export function VedAvatar({
           <motion.div
             className="absolute rounded-full"
             style={{
-              width: responsiveSize * 1.3,
-              height: responsiveSize * 1.3,
+              width: plateSize,
+              height: plateSize,
               left: '50%',
-              top: '50%',
-              transform: 'translate(-50%, -50%)',
+              top: plateTop,
+              x: '-50%',
+              y: '-50%',
               background: 'radial-gradient(circle, rgba(255,153,51,0.08) 0%, transparent 70%)',
             } as any}
-            animate={{ scale: [1, 1.1, 1], opacity: [0.6, 1, 0.6] }}
+            animate={{ scale: [1, 1.15, 1], opacity: [0.6, 1, 0.6] }}
             transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
           />
         )}
@@ -103,15 +104,17 @@ export function VedAvatar({
           <motion.div
             className="absolute rounded-full"
             style={{
-              width: responsiveSize + effectPadding,
-              height: responsiveSize + effectPadding,
+              width: plateSize + 10,
+              height: plateSize + 10,
               left: '50%',
-              top: '50%',
-              transform: 'translate(-50%, -50%)',
+              top: plateTop,
+              x: '-50%',
+              y: '-50%',
               border: `2px solid ${ringColor}`,
               boxShadow: `0 0 20px ${ringColor}`,
+              zIndex: 0,
             } as any}
-            animate={{ scale: [1, 1.08, 1] }}
+            animate={{ scale: [1, 1.05, 1] }}
             transition={{ duration: ringSpeed, repeat: Infinity, ease: 'easeInOut' }}
           />
         )}
@@ -120,14 +123,16 @@ export function VedAvatar({
           <motion.div
             className="absolute rounded-full"
             style={{
-              width: responsiveSize + effectPadding,
-              height: responsiveSize + effectPadding,
+              width: plateSize + 10,
+              height: plateSize + 10,
               left: '50%',
-              top: '50%',
-              transform: 'translate(-50%, -50%)',
+              top: plateTop,
+              x: '-50%',
+              y: '-50%',
               border: `2px solid ${ringColor}`,
+              zIndex: 0,
             } as any}
-            animate={{ scale: [1, 1.06, 1] }}
+            animate={{ scale: [1, 1.04, 1] }}
             transition={{ duration: ringSpeed, repeat: Infinity, ease: 'easeInOut' }}
           />
         )}
@@ -136,14 +141,16 @@ export function VedAvatar({
           <motion.div
             className="absolute rounded-full"
             style={{
-              width: responsiveSize + effectPadding - 10,
-              height: responsiveSize + effectPadding - 10,
+              width: plateSize + 6,
+              height: plateSize + 6,
               left: '50%',
-              top: '50%',
-              transform: 'translate(-50%, -50%)',
+              top: plateTop,
+              x: '-50%',
+              y: '-50%',
               border: '3px solid transparent',
               borderTopColor: '#FF9933',
               borderRightColor: '#FF9933',
+              zIndex: 0,
             } as any}
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
@@ -154,12 +161,13 @@ export function VedAvatar({
           <div
             className="absolute rounded-full"
             style={{
-              width: responsiveSize + effectPadding - 20,
-              height: responsiveSize + effectPadding - 20,
+              width: plateSize + 24,
+              height: plateSize + 24,
               left: '50%',
-              top: '50%',
+              top: plateTop,
               transform: 'translate(-50%, -50%)',
               background: 'radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%)',
+              zIndex: 0,
             }}
           />
         )}
@@ -206,125 +214,127 @@ export function VedAvatar({
             zIndex: 1,
           }}
         >
+          {/* SVG Definitions — feathered patches & blur */}
+          <defs>
+            <radialGradient id="mouthPatchGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor={F.skinMouth} stopOpacity="1" />
+              <stop offset="55%" stopColor={F.skinMouth} stopOpacity="0.95" />
+              <stop offset="80%" stopColor={F.skinMouth} stopOpacity="0.5" />
+              <stop offset="100%" stopColor={F.skinMouth} stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="eyePatchGradL" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor={F.skinEye} stopOpacity="1" />
+              <stop offset="60%" stopColor={F.skinEye} stopOpacity="0.95" />
+              <stop offset="85%" stopColor={F.skinEye} stopOpacity="0.4" />
+              <stop offset="100%" stopColor={F.skinEye} stopOpacity="0" />
+            </radialGradient>
+            <filter id="softEdge" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" />
+            </filter>
+          </defs>
+
           <image href={AVATAR_IMAGE_SRC} x="0" y="0" width={F.width} height={F.height} preserveAspectRatio="xMidYMid slice" />
 
-          <ellipse cx={F.lex} cy={F.ley} rx={F.eyePatchRx} ry={F.eyePatchRy} fill={F.skinEye} />
-          <ellipse cx={F.rex} cy={F.rey} rx={F.eyePatchRx} ry={F.eyePatchRy} fill={F.skinEye} />
-          <ellipse cx={F.mx} cy={F.my} rx={F.mouthPatchRx} ry={F.mouthPatchRy} fill={F.skinMouth} />
+          {/* ── Eyes ──
+              Strategy: Same as mouth — original image eyes are the open state.
+              - OPEN (default): Nothing overlaid, original artwork eyes show through
+              - BLINK: Feathered patches cover original eyes + closed-eye curves drawn on top
+          */}
+          {blinking && (
+            <>
+              {/* Feathered patches to cover original open eyes during blink */}
+              <ellipse cx={F.lex} cy={F.ley} rx={F.eyePatchRx * 1.4} ry={F.eyePatchRy * 1.5} fill="url(#eyePatchGradL)" filter="url(#softEdge)" />
+              <ellipse cx={F.rex} cy={F.rey} rx={F.eyePatchRx * 1.4} ry={F.eyePatchRy * 1.5} fill="url(#eyePatchGradL)" filter="url(#softEdge)" />
 
-          {blinking ? (
-            <>
-              <line
-                x1={F.lex - F.blinkHalfWidth}
-                y1={F.ley}
-                x2={F.lex + F.blinkHalfWidth}
-                y2={F.ley}
-                stroke="#33261a"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-              <line
-                x1={F.rex - F.blinkHalfWidth}
-                y1={F.rey}
-                x2={F.rex + F.blinkHalfWidth}
-                y2={F.rey}
-                stroke="#33261a"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-            </>
-          ) : (
-            <>
-              <ellipse cx={F.lex} cy={F.ley} rx={F.eyeRx} ry={F.eyeRy} fill="white" />
-              <ellipse cx={F.lex + 0.6} cy={F.ley + 0.5} rx={F.pupilRx} ry={F.pupilRy} fill="#2f2218" />
-              <circle cx={F.lex + 1.3} cy={F.ley - 1.1} r="0.72" fill="white" opacity="0.95" />
+              {/* Closed eye curves — gentle downward arcs matching the character's style */}
               <path
-                d={`M ${F.lex - 5.8} ${F.ley - 0.9} Q ${F.lex} ${F.ley - 5.3} ${F.lex + 5.8} ${F.ley - 0.9}`}
+                d={`M ${F.lex - F.blinkHalfWidth} ${F.ley - 0.5} Q ${F.lex} ${F.ley + 2} ${F.lex + F.blinkHalfWidth} ${F.ley - 0.5}`}
                 stroke="#4d372a"
-                strokeWidth="1"
+                strokeWidth="1.8"
                 strokeLinecap="round"
                 fill="none"
-                opacity="0.66"
+                opacity="0.85"
               />
-
-              <ellipse cx={F.rex} cy={F.rey} rx={F.eyeRx} ry={F.eyeRy} fill="white" />
-              <ellipse cx={F.rex + 0.7} cy={F.rey + 0.5} rx={F.pupilRx} ry={F.pupilRy} fill="#2f2218" />
-              <circle cx={F.rex + 1.5} cy={F.rey - 1.1} r="0.72" fill="white" opacity="0.95" />
               <path
-                d={`M ${F.rex - 5.6} ${F.rey - 0.9} Q ${F.rex} ${F.rey - 5.3} ${F.rex + 5.6} ${F.rey - 0.9}`}
+                d={`M ${F.rex - F.blinkHalfWidth} ${F.rey - 0.5} Q ${F.rex} ${F.rey + 2} ${F.rex + F.blinkHalfWidth} ${F.rey - 0.5}`}
                 stroke="#4d372a"
-                strokeWidth="1"
+                strokeWidth="1.8"
                 strokeLinecap="round"
                 fill="none"
-                opacity="0.66"
+                opacity="0.85"
               />
             </>
           )}
 
-          {lipMotionState && (
-            <>
-              <motion.g
-                style={{ transformOrigin: `${F.mx}px ${F.my + 2}px` }}
-                animate={{
-                  scaleY:
-                    lipMotionState === 'speaking'
-                      ? [1.0, 1.0, 1.3, 0.9, 1.2, 0.95, 1.0]
-                      : lipMotionState === 'active'
-                        ? [1.0, 1.0, 1.08, 0.98, 1.05, 1.0]
-                        : [1.0, 1.0, 1.02, 0.99, 1.02, 1.0],
-                  y:
-                    lipMotionState === 'speaking'
-                      ? [0, 0, 0.6, -0.1, 0.7, -0.15, 0]
-                      : lipMotionState === 'active'
-                        ? [0, 0, 0.25, 0, 0.28, 0]
-                        : [0, 0, 0.1, 0, 0.12, 0],
-                }}
-                transition={{
-                  duration: lipMotionState === 'speaking' ? 0.85 : lipMotionState === 'active' ? 1.4 : 2.0,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-              >
-                <path
-                  d={`M ${F.mx - 8.4} ${F.my - 0.2} Q ${F.mx} ${F.my + 2.8} ${F.mx + 8.4} ${F.my - 0.2}`}
-                  stroke={F.lipStroke}
-                  strokeWidth="1.8"
-                  fill="none"
-                  strokeLinecap="round"
-                  opacity="0.92"
-                />
-                <ellipse cx={F.mx} cy={F.my + 1.25} rx="5.6" ry="3.6" fill={F.mouthFill} />
-                <path
-                  d={`M ${F.mx - 8.1} ${F.my + 1.9} Q ${F.mx} ${F.my + 6.2} ${F.mx + 8.1} ${F.my + 1.9}`}
-                  stroke={F.lipStroke}
-                  strokeWidth="1.35"
-                  fill="none"
-                  strokeLinecap="round"
-                  opacity="0.82"
-                />
-              </motion.g>
-              <motion.ellipse
-                cx={F.mx}
-                cy={F.my + 0.5}
-                rx={F.mouthPatchRx}
-                ry={F.mouthPatchRy}
-                fill={F.skinMouth}
-                animate={{
-                  opacity:
-                    lipMotionState === 'speaking'
-                      ? [0, 0, 0, 0.75, 0, 0.8, 0]
-                      : lipMotionState === 'active'
-                        ? [0, 0, 0, 0.6, 0, 0.65, 0]
-                        : [0, 0, 0, 0.35, 0, 0.4, 0],
-                }}
-                transition={{
-                  duration: lipMotionState === 'speaking' ? 0.85 : lipMotionState === 'active' ? 1.4 : 2.0,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-              />
-            </>
-          )}
+          {/* ── Mouth / Lip-sync ──
+              Strategy: The original image has an open smiling mouth.
+              - SPEAKING: Patch fades OUT → original smile shows through (open mouth)
+              - IDLE:     Patch fades IN  → covers smile, a closed-mouth line is drawn on top
+              This creates natural open↔close lip-sync using the actual artwork.
+          */}
+
+          {/* Mouth cover patch — hides the original open smile when idle */}
+          <motion.ellipse
+            cx={F.mx}
+            cy={F.my + 1}
+            rx={F.mouthPatchRx * 1.5}
+            ry={F.mouthPatchRy * 1.6}
+            fill="url(#mouthPatchGrad)"
+            filter="url(#softEdge)"
+            animate={{
+              opacity:
+                lipMotionState === 'speaking'
+                  ? [1, 0.3, 0.8, 0.2, 0.7, 0.25, 1]
+                  : lipMotionState === 'active'
+                    ? [1, 0.6, 0.9, 0.5, 1]
+                    : [1],
+            }}
+            transition={{
+              duration: lipMotionState === 'speaking' ? 0.55 : lipMotionState === 'active' ? 1.2 : 0,
+              repeat: lipMotionState !== 'idle' ? Infinity : 0,
+              ease: [0.45, 0.05, 0.55, 0.95],
+            }}
+          />
+
+          {/* Closed mouth line — gentle smile matching the character's style.
+              Visible when idle, fades out when speaking to reveal original smile. */}
+          <motion.g
+            animate={{
+              opacity:
+                lipMotionState === 'speaking'
+                  ? [1, 0.2, 0.85, 0.15, 0.8, 0.2, 1]
+                  : lipMotionState === 'active'
+                    ? [1, 0.5, 0.9, 0.45, 1]
+                    : [1],
+            }}
+            transition={{
+              duration: lipMotionState === 'speaking' ? 0.55 : lipMotionState === 'active' ? 1.2 : 0,
+              repeat: lipMotionState !== 'idle' ? Infinity : 0,
+              ease: [0.45, 0.05, 0.55, 0.95],
+            }}
+          >
+            {/* Closed upper lip — gentle upward curve matching the smile shape */}
+            <path
+              d={`M ${F.mx - 9} ${F.my + 0.5}
+                  C ${F.mx - 5} ${F.my - 1}, ${F.mx - 1.5} ${F.my - 1.8}, ${F.mx} ${F.my - 0.6}
+                  C ${F.mx + 1.5} ${F.my - 1.8}, ${F.mx + 5} ${F.my - 1}, ${F.mx + 9} ${F.my + 0.5}`}
+              stroke="#8B5E3C"
+              strokeWidth="1.4"
+              fill="none"
+              strokeLinecap="round"
+              opacity="0.85"
+            />
+            {/* Closed lower lip — subtle line just below */}
+            <path
+              d={`M ${F.mx - 7} ${F.my + 1}
+                  Q ${F.mx} ${F.my + 3.5} ${F.mx + 7} ${F.my + 1}`}
+              stroke="#8B5E3C"
+              strokeWidth="0.9"
+              fill="none"
+              strokeLinecap="round"
+              opacity="0.45"
+            />
+          </motion.g>
         </svg>
       </motion.div>
 
@@ -407,97 +417,75 @@ export function VedAvatarSmall({ speaking = false, processing = false }: { speak
             pointerEvents: 'none',
           }}
         >
-          <ellipse cx={F.lex} cy={F.ley} rx={F.eyePatchRx} ry={F.eyePatchRy} fill={F.skinEye} />
-          <ellipse cx={F.rex} cy={F.rey} rx={F.eyePatchRx} ry={F.eyePatchRy} fill={F.skinEye} />
-          <ellipse cx={F.mx} cy={F.my} rx={F.mouthPatchRx} ry={F.mouthPatchRy} fill={F.skinMouth} />
+          <defs>
+            <radialGradient id="mouthPatchGradSm" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor={F.skinMouth} stopOpacity="1" />
+              <stop offset="55%" stopColor={F.skinMouth} stopOpacity="0.95" />
+              <stop offset="80%" stopColor={F.skinMouth} stopOpacity="0.5" />
+              <stop offset="100%" stopColor={F.skinMouth} stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="eyePatchGradSm" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor={F.skinEye} stopOpacity="1" />
+              <stop offset="60%" stopColor={F.skinEye} stopOpacity="0.95" />
+              <stop offset="85%" stopColor={F.skinEye} stopOpacity="0.4" />
+              <stop offset="100%" stopColor={F.skinEye} stopOpacity="0" />
+            </radialGradient>
+            <filter id="softEdgeSm" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" />
+            </filter>
+          </defs>
 
-          {blinking ? (
+          {blinking && (
             <>
-              <line
-                x1={F.lex - F.blinkHalfWidth}
-                y1={F.ley}
-                x2={F.lex + F.blinkHalfWidth}
-                y2={F.ley}
-                stroke="#33261a"
-                strokeWidth="2.5"
-                strokeLinecap="round"
+              <ellipse cx={F.lex} cy={F.ley} rx={F.eyePatchRx * 1.4} ry={F.eyePatchRy * 1.5} fill="url(#eyePatchGradSm)" filter="url(#softEdgeSm)" />
+              <ellipse cx={F.rex} cy={F.rey} rx={F.eyePatchRx * 1.4} ry={F.eyePatchRy * 1.5} fill="url(#eyePatchGradSm)" filter="url(#softEdgeSm)" />
+              <path
+                d={`M ${F.lex - F.blinkHalfWidth} ${F.ley - 0.5} Q ${F.lex} ${F.ley + 2} ${F.lex + F.blinkHalfWidth} ${F.ley - 0.5}`}
+                stroke="#4d372a" strokeWidth="1.8" strokeLinecap="round" fill="none" opacity="0.85"
               />
-              <line
-                x1={F.rex - F.blinkHalfWidth}
-                y1={F.rey}
-                x2={F.rex + F.blinkHalfWidth}
-                y2={F.rey}
-                stroke="#33261a"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-            </>
-          ) : null}
-
-          {lipMotionState && (
-            <>
-              <motion.g
-                style={{ transformOrigin: `${F.mx}px ${F.my + 2}px` }}
-                animate={{
-                  scaleY:
-                    lipMotionState === 'speaking'
-                      ? [1.0, 1.0, 1.3, 0.9, 1.2, 0.95, 1.0]
-                      : lipMotionState === 'active'
-                        ? [1.0, 1.0, 1.08, 0.98, 1.05, 1.0]
-                        : [1.0],
-                  y:
-                    lipMotionState === 'speaking'
-                      ? [0, 0, 0.6, -0.1, 0.7, -0.15, 0]
-                      : lipMotionState === 'active'
-                        ? [0, 0, 0.25, 0, 0.28, 0]
-                        : [0],
-                }}
-                transition={{
-                  duration: lipMotionState === 'speaking' ? 0.85 : lipMotionState === 'active' ? 1.4 : 0,
-                  repeat: lipMotionState !== 'idle' ? Infinity : 0,
-                  ease: 'easeInOut',
-                }}
-              >
-                <path
-                  d={`M ${F.mx - 8.4} ${F.my - 0.2} Q ${F.mx} ${F.my + 2.8} ${F.mx + 8.4} ${F.my - 0.2}`}
-                  stroke={F.lipStroke}
-                  strokeWidth="1.8"
-                  fill="none"
-                  strokeLinecap="round"
-                  opacity="0.92"
-                />
-                <ellipse cx={F.mx} cy={F.my + 1.25} rx="5.6" ry="3.6" fill={F.mouthFill} />
-                <path
-                  d={`M ${F.mx - 8.1} ${F.my + 1.9} Q ${F.mx} ${F.my + 6.2} ${F.mx + 8.1} ${F.my + 1.9}`}
-                  stroke={F.lipStroke}
-                  strokeWidth="1.35"
-                  fill="none"
-                  strokeLinecap="round"
-                  opacity="0.82"
-                />
-              </motion.g>
-              <motion.ellipse
-                cx={F.mx}
-                cy={F.my + 0.5}
-                rx={F.mouthPatchRx}
-                ry={F.mouthPatchRy}
-                fill={F.skinMouth}
-                animate={{
-                  opacity:
-                    lipMotionState === 'speaking'
-                      ? [0, 0, 0, 0.75, 0, 0.8, 0]
-                      : lipMotionState === 'active'
-                        ? [0, 0, 0, 0.6, 0, 0.65, 0]
-                        : [0],
-                }}
-                transition={{
-                  duration: lipMotionState === 'speaking' ? 0.85 : lipMotionState === 'active' ? 1.4 : 0,
-                  repeat: lipMotionState !== 'idle' ? Infinity : 0,
-                  ease: 'easeInOut',
-                }}
+              <path
+                d={`M ${F.rex - F.blinkHalfWidth} ${F.rey - 0.5} Q ${F.rex} ${F.rey + 2} ${F.rex + F.blinkHalfWidth} ${F.rey - 0.5}`}
+                stroke="#4d372a" strokeWidth="1.8" strokeLinecap="round" fill="none" opacity="0.85"
               />
             </>
           )}
+
+          {/* Mouth cover patch — hides original open smile when idle */}
+          <motion.ellipse
+            cx={F.mx} cy={F.my + 1}
+            rx={F.mouthPatchRx * 1.5} ry={F.mouthPatchRy * 1.6}
+            fill="url(#mouthPatchGradSm)" filter="url(#softEdgeSm)"
+            animate={{
+              opacity: lipMotionState === 'speaking' ? [1, 0.3, 0.8, 0.2, 0.7, 0.25, 1]
+                : lipMotionState === 'active' ? [1, 0.6, 0.9, 0.5, 1] : [1],
+            }}
+            transition={{
+              duration: lipMotionState === 'speaking' ? 0.55 : lipMotionState === 'active' ? 1.2 : 0,
+              repeat: lipMotionState !== 'idle' ? Infinity : 0,
+              ease: [0.45, 0.05, 0.55, 0.95],
+            }}
+          />
+          {/* Closed mouth line */}
+          <motion.g
+            animate={{
+              opacity: lipMotionState === 'speaking' ? [1, 0.2, 0.85, 0.15, 0.8, 0.2, 1]
+                : lipMotionState === 'active' ? [1, 0.5, 0.9, 0.45, 1] : [1],
+            }}
+            transition={{
+              duration: lipMotionState === 'speaking' ? 0.55 : lipMotionState === 'active' ? 1.2 : 0,
+              repeat: lipMotionState !== 'idle' ? Infinity : 0,
+              ease: [0.45, 0.05, 0.55, 0.95],
+            }}
+          >
+            <path
+              d={`M ${F.mx - 9} ${F.my + 0.5} C ${F.mx - 5} ${F.my - 1}, ${F.mx - 1.5} ${F.my - 1.8}, ${F.mx} ${F.my - 0.6} C ${F.mx + 1.5} ${F.my - 1.8}, ${F.mx + 5} ${F.my - 1}, ${F.mx + 9} ${F.my + 0.5}`}
+              stroke="#8B5E3C" strokeWidth="1.4" fill="none" strokeLinecap="round" opacity="0.85"
+            />
+            <path
+              d={`M ${F.mx - 7} ${F.my + 1} Q ${F.mx} ${F.my + 3.5} ${F.mx + 7} ${F.my + 1}`}
+              stroke="#8B5E3C" strokeWidth="0.9" fill="none" strokeLinecap="round" opacity="0.45"
+            />
+          </motion.g>
         </svg>
       </div>
     </div>
