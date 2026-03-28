@@ -36,13 +36,14 @@ interface AppState {
   login: (userData: { name: string; email: string; token: string }) => void;
   loginWithToken: (token: string, user: AppState['user']) => void;
   logout: () => void;
+  resetChatSession: () => void;
   addApplication: (ref: string, data: unknown) => void;
 }
 
 const Ctx = createContext<AppState>({} as AppState);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [sessionId] = useState(() => {
+  const [sessionId, setSessionId] = useState(() => {
     const e = localStorage.getItem('js_session_id');
     if (e) return e;
     const n = v4Fallback();
@@ -107,6 +108,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const updateLastInputTime = useCallback(() => setLastInputTime(Date.now()), []);
   const setActiveScheme = useCallback((id: string|null) => setActiveSchemeId(id), []);
 
+  /** Generate a fresh session ID and wipe all chat state. Call on login and logout. */
+  const resetChatSession = useCallback(() => {
+    const newId = v4Fallback();
+    localStorage.setItem('js_session_id', newId);
+    setSessionId(newId);
+    setMessages([]);
+    setProfileState({});
+    setChatState('intake');
+    setSchemes([]);
+    setGapValue(0);
+    setActiveSchemeId(null);
+  }, []);
+
   const login = useCallback((userData: { name: string; email: string; token: string }) => {
     const isAdmin = userData.email === ADMIN_EMAIL;
     const nextUser = {
@@ -125,7 +139,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       email: userData.email,
       isAdmin,
     }));
-  }, []);
+    // Give each logged-in user a fresh session — prevents previous user's
+    // chat history/profile from bleeding into the new account.
+    resetChatSession();
+  }, [resetChatSession]);
 
   const loginWithToken = useCallback((token: string, u: AppState['user']) => {
     if (!u) return;
@@ -141,7 +158,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('js_user');
     setIsLoggedIn(false);
     setUser(null);
-  }, []);
+    // Fresh session so the next user (or anonymous session) starts clean.
+    resetChatSession();
+  }, [resetChatSession]);
 
   const addApplication = useCallback((ref: string, data: unknown) => {
     setApplications(prev => {
@@ -157,7 +176,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       currentLanguage, isVoicePlaying, lastInputTime, applications, activeSchemeId,
       addMessage, setProfile, mergeProfile, setSchemes, setGapValue, setChatState,
       setLanguage, setVoicePlaying: setIsVoicePlaying, updateLastInputTime,
-      setActiveScheme, login, loginWithToken, logout, addApplication,
+      setActiveScheme, login, loginWithToken, logout, resetChatSession, addApplication,
     }}>
       {children}
     </Ctx.Provider>

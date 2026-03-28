@@ -285,11 +285,16 @@ export function Chat() {
   handleSendRef.current = handleSend;
   processVoiceRef.current = processVoice;
 
-  // Run-once: seed first message and handle navigation state
+  // Seed the welcome message whenever the chat is empty (initial load + after session reset).
   useEffect(() => {
     if (messages.length === 0) {
       addMessage({ id: v4Fallback(), role: 'bot', text: t('chat.first') });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages.length]);
+
+  // Run-once: handle navigation state (audio entry, initial message)
+  useEffect(() => {
     const state = location.state as any;
     if (state?.fromAudioEntry && state?.audioBlob) {
       setVoiceState('processing');

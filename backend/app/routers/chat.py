@@ -120,16 +120,22 @@ async def chat(req: ChatRequest, request: Request):
                 )
             except Exception as e:
                 logger.error(f"Scheme matching failed for session {req.session_id}: {e}", exc_info=True)
-                # Fall back to asking the next intake question rather than crashing
-                fallback_q = "Thodi technical dikkat aayi. Kya aap apna state aur umar phir bata sakte hain?"
-                db.update_session(req.session_id, {"profile": profile, "language": language})
+                # Clear the threshold so user is not stuck in a matching-failure loop.
+                # Remove age from profile so the threshold check fails next turn and
+                # the intake flow can recover gracefully.
+                fallback_profile = {k: v for k, v in profile.items() if k != "age"}
+                if language == "hi":
+                    fallback_q = "थोड़ी तकनीकी दिक्कत आई। आप अपनी उम्र फिर बताइए?"
+                else:
+                    fallback_q = "Technical issue. Please tell me your age again."
+                db.update_session(req.session_id, {"profile": fallback_profile, "language": language})
                 try:
                     audio = await sarvam.text_to_speech(fallback_q, LANG_TO_SARVAM.get(language, "hi-IN"))
                 except Exception:
                     audio = ""
                 return ChatResponse(
                     reply=fallback_q, audio_b64=audio, state="intake",
-                    profile=profile, session_id=req.session_id, language=language
+                    profile=fallback_profile, session_id=req.session_id, language=language
                 )
         else:
             # Ask for next missing field

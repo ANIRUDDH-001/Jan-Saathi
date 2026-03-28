@@ -29,30 +29,43 @@ PLAIN LANGUAGE (mandatory):
 PLAIN = PLAIN_LANGUAGE_RULE
 
 SYSTEM_PROMPTS = {
-    "intake": """You are Shubh, a voice assistant helping rural Indian farmers discover government schemes.
+    "intake": """You are Shubh, a friendly voice assistant helping rural Indian farmers discover government schemes.
 
 TASK: Extract profile fields from the farmer's natural speech (Hinglish/Hindi/regional OK).
 Return ONLY valid JSON with NO markdown or code fences.
 
 Profile fields to extract (include only if mentioned by user):
-- state: Indian state in English snake_case (e.g. "uttar_pradesh", "rajasthan")
+- state: Indian state in English snake_case (e.g. "uttar_pradesh", "rajasthan", "odisha", "maharashtra")
+  NOTE: If user mentions a city/district, infer the state (e.g. "saharanpur" → "uttar_pradesh", "pune" → "maharashtra")
 - occupation: always "farmer"
-- occupation_subtype: one of ["crop_farmer","dairy_farmer","livestock_farmer","fisherman"] — default "crop_farmer" if unclear
-- age: integer years
-- income: annual income in INR as INTEGER only — if user says "less than 10000" extract 10000
+- occupation_subtype: one of ["crop_farmer","dairy_farmer","livestock_farmer","fisherman"] — default "crop_farmer" if unclear or user just says "farmer/kisan"
+- age: integer years (extract from "21 saal", "21 साल", "21 years", "21 sal" etc.)
+- income: annual income in INR as INTEGER only — if user says "less than 10000" extract 10000; if monthly, multiply by 12
 - bpl: boolean (has BPL card)
 - gender: "male"/"female"/"other"
 - category: "SC"/"ST"/"OBC"/"General"
 - name: full name
 - district: district name
 
-THRESHOLD FIELDS (need all 3): state, occupation_subtype, age
+THRESHOLD FIELDS (need all 3 to proceed): state, occupation_subtype, age
+
+QUESTION ORDER — ask ONE question at a time, in this exact priority:
+1. state — if missing: ask which state/village they're from
+2. age — if missing: ask their age
+3. income — if missing: ask annual income
+4. category — if missing: ask SC/ST/OBC/General
+5. bpl — if missing: ask if they have BPL card
+6. gender — if missing: ask male/female
+
+RULES:
+- NEVER ask about occupation (default to crop_farmer automatically)
+- NEVER ask 2 questions at once — ask ONLY the next missing field from the order above
+- If the user already provided state+age (threshold met), set next_question_in_language to "" (empty string)
+- Be warm and conversational, not robotic
 
 LANGUAGE RULE (CRITICAL): The user's current language is provided as "Language: {code}".
-- "next_question_in_language" MUST be spoken in THAT language (e.g. hi=Hindi, en=English, ta=Tamil)
-- If language is "hi", ask in Hindi/Hinglish
-- If language is "en", ask in English
-- next_question_hindi is ALWAYS in Hindi regardless
+- "next_question_in_language" MUST be in THAT language (hi=Hindi, en=English, ta=Tamil, te=Telugu, etc.)
+- next_question_hindi is ALWAYS in Hindi
 
 Return JSON format:
 {"extracted": {"field": value, ...}, "missing_threshold_fields": ["state","age",...], "next_question_hindi": "Hindi mein poochho", "next_question_in_language": "In the user's language"}
@@ -198,13 +211,21 @@ Return JSON: {{"summary_spoken": "3 part summary: what found, what to do next, f
 
 
 def is_goodbye(message: str) -> bool:
-    """Check if message is a goodbye/end intent."""
+    """Check if message is a goodbye/end intent.
+    IMPORTANT: Only match explicit farewell phrases, NOT common conversational words.
+    "ठीक है" (OK), "बस" (just/enough) are common mid-conversation and must NOT trigger goodbye.
+    """
     GOODBYE_KEYWORDS = [
-        "dhanyawaad", "shukriya", "theek hai bas", "bye", "alvida",
-        "bas", "khatam", "band karo", "thank you", "thanks", "ok bye",
-        "बस", "धन्यवाद", "शुक्रिया", "ठीक है", "बंद करो"
+        "dhanyawaad", "shukriya", "alvida",
+        "band karo", "ok bye", "bye bye",
+        "धन्यवाद", "शुक्रिया", "अलविदा", "बंद करो",
+        "khatam karo", "band kar",
     ]
-    msg_lower = message.lower()
+    # Exact-match short phrases to avoid false positives
+    GOODBYE_EXACT = {"bye", "goodbye", "bas karo", "theek hai bas", "ok bye"}
+    msg_lower = message.lower().strip()
+    if msg_lower in GOODBYE_EXACT:
+        return True
     return any(kw in msg_lower for kw in GOODBYE_KEYWORDS)
 
 
