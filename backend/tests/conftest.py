@@ -90,14 +90,8 @@ def mock_llm(monkeypatch):
     """Mock Groq LLM calls — all async to match AsyncGroq implementation."""
     from app.services import groq_llm as llm
 
-    async def _process_intake(*a, **k):
-        return {
-            "extracted": {"state": "uttar_pradesh", "occupation_subtype": "crop_farmer", "age": 45},
-            "threshold_ready": True,
-            "next_question_hi": "Aap kahan se hain?",
-            "next_question_in_language": "Aap kahan se hain?",
-            "ready_to_match": True,
-        }
+    async def _extract_all_fields(*a, **k):
+        return {"state": "uttar_pradesh", "occupation_subtype": "crop_farmer", "age": 45}
 
     async def _generate_gap(*a, **k):
         return {
@@ -115,7 +109,7 @@ def mock_llm(monkeypatch):
     async def _generate_goodbye(*a, **k):
         return "Aaj bahut kuch hua. Kal CSC jaana."
 
-    monkeypatch.setattr(llm, "process_intake", _process_intake)
+    monkeypatch.setattr(llm, "extract_all_fields", _extract_all_fields)
     monkeypatch.setattr(llm, "generate_gap_announcement", _generate_gap)
     monkeypatch.setattr(llm, "generate_scheme_guidance", _generate_guidance)
     monkeypatch.setattr(llm, "generate_goodbye_summary", _generate_goodbye)
@@ -148,7 +142,7 @@ def mock_sarvam(monkeypatch):
     async def fake_text_to_speech(text, lang="hi-IN"):
         return "UklGRiQAAABXQVZFZm10IBAAAA=="  # tiny valid WAV b64
 
-    async def fake_transcribe(audio, language_code="hi-IN"):
+    async def fake_transcribe(audio, language_code="hi-IN", session_id=""):
         return {"transcript": "Main UP se hoon kisan hoon 45 saal",
                 "language_code": "hi-IN", "language_short": "hi"}
 

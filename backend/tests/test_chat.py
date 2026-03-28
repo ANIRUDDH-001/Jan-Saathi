@@ -5,19 +5,13 @@ import pytest
 class TestIntakeState:
     def test_intake_returns_question(self, client, mock_db, mock_llm, mock_embed, mock_sarvam, monkeypatch):
         """When threshold not met, reply contains the follow-up question."""
-        # Override process_intake to NOT be threshold-ready (must be async)
+        # Override extract_all_fields to return only 1 field (threshold not met)
         from app.services import groq_llm as llm
 
-        async def _not_ready(*a, **k):
-            return {
-                "extracted": {"state": "uttar_pradesh"},
-                "threshold_ready": False,
-                "ready_to_match": False,
-                "next_question_hi": "Aapki umar kya hai?",
-                "next_question_in_language": "Aapki umar kya hai?",
-            }
+        async def _partial_extract(*a, **k):
+            return {"state": "uttar_pradesh"}
 
-        monkeypatch.setattr(llm, "process_intake", _not_ready)
+        monkeypatch.setattr(llm, "extract_all_fields", _partial_extract)
         r = client.post("/api/chat", json={
             "message": "Main UP se hoon",
             "session_id": "test-intake-001",

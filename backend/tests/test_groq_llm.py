@@ -13,7 +13,7 @@ class TestIsGoodbye:
         ("theek hai bas", True),
         ("shukriya", True),
         ("धन्यवाद", True),
-        ("बस", True),
+        ("बस", False),  # Standalone बस is NOT a goodbye trigger by design
         ("Main UP se hoon", False),
         ("kisan PM-KISAN", False),
         ("mujhe scheme chahiye", False),
@@ -44,19 +44,21 @@ class TestModelChain:
         assert PLAIN == PLAIN_LANGUAGE_RULE       # Alias must match
 
     def test_system_prompts_all_states_defined(self):
-        """SYSTEM_PROMPTS contains all 4 state keys."""
+        """SYSTEM_PROMPTS contains all 4 state/task keys."""
         from app.services.groq_llm import SYSTEM_PROMPTS
-        for state in ("intake", "match", "guide", "form_fill"):
+        for state in ("extract_fields", "match", "guide", "form_fill"):
             assert state in SYSTEM_PROMPTS, f"Missing prompt for state: {state}"
             assert len(SYSTEM_PROMPTS[state]) > 50
 
 
 class TestPDFGenerator:
-    def test_generate_pdf_raises_if_template_missing(self):
-        """generate_pdf raises FileNotFoundError when template is absent."""
+    def test_generate_pdf_falls_back_for_unknown_template(self):
+        """generate_pdf returns clean PDF bytes for unknown scheme (never raises)."""
         from app.services.pdf_generator import generate_pdf
-        with pytest.raises(FileNotFoundError):
-            generate_pdf("NONEXISTENT", {"name": "Test"})
+        result = generate_pdf("NONEXISTENT", {"name": "Test"})
+        assert isinstance(result, bytes)
+        assert len(result) > 0
+        assert result[:5] == b"%PDF-"
 
     def test_calculate_pmy_full_table(self):
         """calculate_pmy_contribution matches the official government table at key ages."""
