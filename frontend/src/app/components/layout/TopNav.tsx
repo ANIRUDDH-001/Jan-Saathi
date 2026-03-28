@@ -11,21 +11,19 @@ import { getGoogleAuthUrl } from '../../services/api';
 import { toast } from 'sonner';
 
 export function TopNav() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const { isLoggedIn, isAdmin, user, logout } = useApp();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = React.useState(false);
 
   const handleLogin = async () => {
-    // Phase 0: Demo placeholder — OAuth wired in Phase 3
-    // For demo, show a toast explaining OAuth is being wired
-    if (import.meta.env.VITE_DEMO_MODE === 'true') {
-      // Demo fallback: don't auto-login as admin
-      toast.error('Login via Google OAuth — wiring in progress');
-      return;
+    try {
+      sessionStorage.setItem('auth_return_to', window.location.pathname);
+      const url = await getGoogleAuthUrl();
+      window.location.href = url;
+    } catch {
+      toast.error(lang === 'hi' ? 'Login शुरू नहीं हो सका। फिर try करें।' : 'Could not start login. Please try again.');
     }
-    const url = await getGoogleAuthUrl();
-    window.location.href = url;
   };
 
   return (

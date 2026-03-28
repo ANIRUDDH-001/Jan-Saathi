@@ -3,14 +3,16 @@ import { ChevronRight, TrendingUp } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useLang } from '../context/LanguageContext';
 import { RupeeDisplay } from './RupeeDisplay';
+import type { SchemeResult } from '../services/api';
 
 interface GapCardProps {
   gapValue: number;
   schemeCount: number;
+  schemes?: SchemeResult[];
   onViewSchemes: () => void;
 }
 
-export function GapCard({ gapValue, schemeCount, onViewSchemes }: GapCardProps) {
+export function GapCard({ gapValue, schemeCount, schemes, onViewSchemes }: GapCardProps) {
   const { t, lang } = useLang();
   const percentage = Math.min((gapValue / 500000) * 100, 100);
 
@@ -82,28 +84,29 @@ export function GapCard({ gapValue, schemeCount, onViewSchemes }: GapCardProps) 
           </p>
         </div>
 
-        {/* Scheme pills */}
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-4 -mx-1 px-1">
-          {[
-            { name: 'PM-KISAN', amount: '₹6,000' },
-            { name: 'KCC', amount: '₹3L credit' },
-            { name: 'PM-KMY', amount: '₹3,000/माह' },
-          ].map((pill, i) => (
-            <span
-              key={i}
-              className="shrink-0 px-3 py-1.5 rounded-full text-white"
-              style={{
-                backgroundColor: '#FF9933',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                fontFamily: 'Manrope, sans-serif',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {pill.name} {pill.amount}
-            </span>
-          ))}
-        </div>
+        {/* Scheme pills — derived from real matched schemes */}
+        {schemes && schemes.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto pb-2 mb-4 -mx-1 px-1">
+            {schemes.slice(0, 3).map(s => (
+              <span
+                key={s.scheme_id}
+                className="shrink-0 px-3 py-1.5 rounded-full text-white"
+                style={{
+                  backgroundColor: '#FF9933',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  fontFamily: 'Manrope, sans-serif',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {s.acronym || s.name_english}
+                {s.has_monetary_benefit && s.benefit_annual_inr > 0
+                  ? ` ₹${(s.benefit_annual_inr / 1000).toFixed(0)}K/yr`
+                  : ' Suvidha'}
+              </span>
+            ))}
+          </div>
+        )}
 
         <motion.button
           whileHover={{ scale: 1.02 }}

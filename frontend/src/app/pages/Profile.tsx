@@ -7,7 +7,7 @@ import { ShubhAvatarProfile } from '../components/ShubhAvatar';
 
 export function Profile() {
   const { t } = useLang();
-  const { isLoggedIn, user, profile, setProfile, logout } = useApp();
+  const { isLoggedIn, user, profile, setProfile, logout, schemes } = useApp();
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Record<string, unknown>>({
@@ -41,10 +41,6 @@ export function Profile() {
     setProfile(empty); setDraft(empty);
   };
 
-  const mockSavedSchemes = [
-    { name: 'PM-KISAN Samman Nidhi', slug: 'pm-kisan' },
-    { name: 'Ayushman Bharat - PMJAY', slug: 'ayushman-bharat' },
-  ];
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -99,11 +95,21 @@ export function Profile() {
       {/* Saved Schemes */}
       <div className="bg-white rounded-xl border border-border p-6 mb-6">
         <h2 className="text-[#000080] mb-4" style={{ fontWeight: 600 }}>{t('profile.schemes_header')}</h2>
-        {mockSavedSchemes.length > 0 ? (
+        {schemes.length > 0 ? (
           <div className="space-y-2">
-            {mockSavedSchemes.map(s => (
-              <button key={s.slug} onClick={() => navigate(`/schemes/${s.slug}`)} className="w-full text-left px-4 py-3 rounded-lg border border-border hover:bg-muted transition" style={{ fontSize: '0.9rem' }}>
-                {s.name}
+            {schemes.map(s => (
+              <button
+                key={s.scheme_id}
+                onClick={() => navigate(`/schemes/${s.scheme_id}`)}
+                className="w-full text-left px-4 py-3 rounded-lg border border-border hover:bg-muted transition"
+                style={{ fontSize: '0.9rem' }}
+              >
+                {s.name_english}
+                {s.has_monetary_benefit && s.benefit_annual_inr > 0 && (
+                  <span className="ml-2 text-[#138808]" style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                    ₹{s.benefit_annual_inr.toLocaleString('en-IN')}/yr
+                  </span>
+                )}
               </button>
             ))}
           </div>

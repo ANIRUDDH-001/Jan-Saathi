@@ -1,32 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
 import { useLang } from '../context/LanguageContext';
 import { useApp } from '../context/AppContext';
-import { mockSchemes } from '../utils/mockData';
+import { getScheme, submitApplication } from '../services/api';
+import type { SchemeResult } from '../services/api';
 import { Check, Circle, Play, Pause, ArrowLeft, ExternalLink } from 'lucide-react';
+import { LoadingSkeleton } from '../components/LoadingSkeleton';
 
 export function SchemeDetail() {
   const { schemeSlug } = useParams();
   const { lang, t } = useLang();
-  const { submitApplication } = useApp();
+  const { addApplication, sessionId } = useApp();
   const navigate = useNavigate();
+  const [scheme, setScheme] = useState<SchemeResult | null>(null);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
   const [submitState, setSubmitState] = useState<'default' | 'submitting' | 'submitted'>('default');
   const [refNumber, setRefNumber] = useState('');
   const [playing, setPlaying] = useState(false);
 
-  const scheme = mockSchemes.find(s => s.slug === schemeSlug);
+  useEffect(() => {
+    if (!schemeSlug) return;
+    getScheme(schemeSlug)
+      .then(data => {
+        setScheme(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
+      });
+  }, [schemeSlug]);
+
+  if (loading) return <LoadingSkeleton />;
   if (!scheme) return <div className="p-8 text-center">{t('404.body')}</div>;
 
   const tabs = [t('detail.overview'), t('detail.eligibility'), t('detail.documents'), t('detail.howto')];
+  const nameDisplay = lang === 'hi' ? (scheme.name_hindi || scheme.name_english) : scheme.name_english;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setSubmitState('submitting');
-    setTimeout(() => {
-      const ref = submitApplication(scheme.id, scheme.name);
-      setRefNumber(ref);
+    try {
+      const resp = await submitApplication({
+        session_id: sessionId,
+        scheme_id: scheme.scheme_id,
+        form_data: {},
+        confirmed: true,
+      });
+      addApplication(resp.reference_number, resp);
+      setRefNumber(resp.reference_number);
       setSubmitState('submitted');
-    }, 2000);
+    } catch {
+      setSubmitState('default');
+    }
   };
 
   if (submitState === 'submitted') {
@@ -44,26 +69,60 @@ export function SchemeDetail() {
     );
   }
 
+  // Extract spoken content for current language
+  const spokenLang = lang === 'hi' ? 'hi' : 'en';
+  const overview = scheme.spoken_content?.overview?.[spokenLang]
+    || scheme.spoken_content?.intro?.[spokenLang]
+    || scheme.eligibility_summary
+    || '';
+  const eligibilityText = scheme.spoken_content?.eligibility?.[spokenLang]
+    || scheme.eligibility_summary
+    || '';
+  const documentsText = scheme.spoken_content?.documents?.[spokenLang]
+    || scheme.spoken_content?.docs?.[spokenLang]
+    || '';
+  const stepsText = scheme.spoken_content?.steps?.[spokenLang]
+    || scheme.spoken_content?.how_to_apply?.[spokenLang]
+    || '';
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-muted-foreground mb-4" style={{ fontSize: '0.8rem' }}>
         <Link to="/schemes" className="hover:text-foreground">{t('admin.schemes')}</Link>
         <span>&gt;</span>
-        <span className="text-foreground">{lang === 'hi' ? scheme.nameHi : scheme.name}</span>
+        <span className="text-foreground">{nameDisplay}</span>
       </div>
 
       {/* Header */}
       <div className="bg-white rounded-xl border border-border p-6 mb-6">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
-            <h1 className="text-[#000080]" style={{ fontWeight: 700, fontSize: '1.5rem' }}>{lang === 'hi' ? scheme.nameHi : scheme.name}</h1>
-            <p className="text-muted-foreground">{lang === 'hi' ? scheme.ministryHi : scheme.ministry}</p>
+            <h1 className="text-[#000080]" style={{ fontWeight: 700, fontSize: '1.5rem' }}>{nameDisplay}</h1>
+            <p className="text-muted-foreground">{scheme.ministry}</p>
+            {scheme.helpline_number && (
+              <p className="text-muted-foreground mt-1" style={{ fontSize: '0.8rem' }}>
+                Helpline: {scheme.helpline_number}
+              </p>
+            )}
           </div>
           <div className="text-right">
-            <span className="text-[#138808]" style={{ fontSize: '1.5rem', fontWeight: 700 }}>
-              {t('detail.benefit', { value: scheme.benefit.toLocaleString('en-IN') })}
-            </span>
+            {scheme.has_monetary_benefit && scheme.benefit_annual_inr > 0 && (
+              <span className="text-[#138808]" style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+                {t('detail.benefit', { value: scheme.benefit_annual_inr.toLocaleString('en-IN') })}
+              </span>
+            )}
+            <div className="mt-1">
+              <span
+                className="px-2 py-0.5 rounded-full text-xs font-semibold"
+                style={{
+                  backgroundColor: scheme.level === 'central' ? 'rgba(0,0,128,0.1)' : 'rgba(19,136,8,0.1)',
+                  color: scheme.level === 'central' ? '#000080' : '#138808',
+                }}
+              >
+                {scheme.level === 'central' ? (lang === 'hi' ? 'केंद्रीय' : 'Central') : (lang === 'hi' ? 'राज्य' : 'State')}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -87,33 +146,41 @@ export function SchemeDetail() {
         {activeTab === 0 && (
           <div>
             <h3 className="text-[#000080] mb-3" style={{ fontWeight: 600 }}>{t('detail.what')}</h3>
-            <p style={{ lineHeight: 1.8 }}>{lang === 'hi' ? scheme.descriptionHi : scheme.description}</p>
+            {overview ? (
+              <p style={{ lineHeight: 1.8 }}>{overview}</p>
+            ) : (
+              <p className="text-muted-foreground" style={{ lineHeight: 1.8 }}>
+                {lang === 'hi' ? 'विवरण उपलब्ध नहीं है।' : 'Description not available.'}
+              </p>
+            )}
           </div>
         )}
         {activeTab === 1 && (
           <div>
             <h3 className="text-[#000080] mb-3" style={{ fontWeight: 600 }}>{t('detail.qualify')}</h3>
-            <div className="space-y-3">
-              {scheme.eligibility.map((e, i) => (
-                <div key={i} className="flex items-center gap-3 py-2">
-                  {e.matched ? <Check className="w-5 h-5 text-[#138808]" /> : <Circle className="w-5 h-5 text-muted-foreground" />}
-                  <span style={{ fontSize: '0.9rem' }}>{lang === 'hi' ? e.criterionHi : e.criterion}</span>
-                </div>
-              ))}
-            </div>
+            {eligibilityText ? (
+              <p style={{ lineHeight: 1.8 }}>{eligibilityText}</p>
+            ) : (
+              <p className="text-muted-foreground" style={{ lineHeight: 1.8 }}>
+                {lang === 'hi'
+                  ? 'पात्रता विवरण के लिए आधिकारिक पोर्टल देखें।'
+                  : 'See official portal for eligibility details.'}
+              </p>
+            )}
           </div>
         )}
         {activeTab === 2 && (
           <div>
             <h3 className="text-[#000080] mb-3" style={{ fontWeight: 600 }}>{t('detail.need')}</h3>
-            <ol className="list-decimal list-inside space-y-3">
-              {scheme.documents.map((d, i) => (
-                <li key={i}>
-                  <span style={{ fontWeight: 500 }}>{lang === 'hi' ? d.nameHi : d.name}</span>
-                  <span className="text-muted-foreground"> — {lang === 'hi' ? d.sourceHi : d.source}</span>
-                </li>
-              ))}
-            </ol>
+            {documentsText ? (
+              <p style={{ lineHeight: 1.8 }}>{documentsText}</p>
+            ) : (
+              <p className="text-muted-foreground" style={{ lineHeight: 1.8 }}>
+                {lang === 'hi'
+                  ? 'आवश्यक दस्तावेज़ों की सूची के लिए आधिकारिक पोर्टल देखें।'
+                  : 'Visit the official portal for the list of required documents.'}
+              </p>
+            )}
             <p className="mt-4 p-3 rounded-lg bg-[#FF9933]/10 text-[#FF9933]" style={{ fontSize: '0.85rem' }}>
               {t('detail.note')}
             </p>
@@ -122,21 +189,41 @@ export function SchemeDetail() {
         {activeTab === 3 && (
           <div>
             <h3 className="text-[#000080] mb-3" style={{ fontWeight: 600 }}>{t('detail.steps')}</h3>
-            <ol className="space-y-3">
-              {scheme.steps.map((s, i) => (
-                <li key={i} className="flex gap-3">
-                  <span className="w-7 h-7 rounded-full bg-[#000080] text-white flex items-center justify-center shrink-0" style={{ fontSize: '0.8rem', fontWeight: 600 }}>{i + 1}</span>
-                  <span style={{ fontSize: '0.9rem' }}>{lang === 'hi' ? s.stepHi : s.step}</span>
-                </li>
-              ))}
-            </ol>
-            <p className="mt-4 text-muted-foreground" style={{ fontSize: '0.85rem' }}>
-              {t('detail.office', { office_type: lang === 'hi' ? scheme.officeTypeHi : scheme.officeType })}
-            </p>
-            {scheme.applyUrl && (
-              <a href={scheme.applyUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-2 text-[#000080] hover:underline" style={{ fontSize: '0.9rem' }}>
-                <ExternalLink className="w-4 h-4" /> {t('detail.official')}
-              </a>
+            {stepsText ? (
+              <p style={{ lineHeight: 1.8 }}>{stepsText}</p>
+            ) : (
+              <p className="text-muted-foreground" style={{ lineHeight: 1.8 }}>
+                {lang === 'hi'
+                  ? 'आवेदन के चरणों के लिए आधिकारिक पोर्टल देखें।'
+                  : 'Visit the official portal for step-by-step application instructions.'}
+              </p>
+            )}
+            {(scheme.portal_url || scheme.form_pdf_url) && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {scheme.portal_url && (
+                  <a
+                    href={scheme.portal_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[#000080] hover:underline"
+                    style={{ fontSize: '0.9rem' }}
+                  >
+                    <ExternalLink className="w-4 h-4" /> {t('detail.official')}
+                  </a>
+                )}
+                {scheme.form_pdf_url && (
+                  <a
+                    href={scheme.form_pdf_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[#138808] hover:underline ml-4"
+                    style={{ fontSize: '0.9rem' }}
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    {lang === 'hi' ? 'फॉर्म PDF' : 'Form PDF'}
+                  </a>
+                )}
+              </div>
             )}
           </div>
         )}

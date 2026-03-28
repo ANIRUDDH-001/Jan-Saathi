@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { useLang } from '../context/LanguageContext';
 import { useApp } from '../context/AppContext';
-import { mockSchemes } from '../utils/mockData';
 import { Send, Volume2 } from 'lucide-react';
 import { v4Fallback } from '../utils/uuid';
 import { ProfileCard } from '../components/ProfileCard';
@@ -553,7 +552,8 @@ export function Chat() {
             {chatState === 'match' && (
               <GapCard
                 gapValue={gapValue}
-                schemeCount={mockSchemes.length}
+                schemeCount={schemes.length}
+                schemes={schemes}
                 onViewSchemes={() => navigate('/schemes')}
               />
             )}
@@ -562,7 +562,12 @@ export function Chat() {
       </div>
 
       {/* Goodbye Summary */}
-      <GoodbyeSummary visible={showGoodbye} onClose={() => { setShowGoodbye(false); navigate('/'); }} />
+      <GoodbyeSummary
+        visible={showGoodbye}
+        schemesFound={schemes.length}
+        totalBenefit={gapValue}
+        onClose={() => { setShowGoodbye(false); navigate('/'); }}
+      />
     </div>
   );
 }

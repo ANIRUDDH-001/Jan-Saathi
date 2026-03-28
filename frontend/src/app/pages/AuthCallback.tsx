@@ -20,8 +20,10 @@ export function AuthCallback() {
           email: d.user.email,
           token: d.token,
         });
+        const returnTo = sessionStorage.getItem('auth_return_to') || '';
+        sessionStorage.removeItem('auth_return_to');
         const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || 'aniruddhvijay2k7@gmail.com';
-        navigate(d.user.email === adminEmail ? '/admin/dashboard' : '/chat');
+        navigate(returnTo || (d.user.email === adminEmail ? '/admin/dashboard' : '/chat'));
       })
       .catch(e => { setError(e.message); setTimeout(() => navigate('/'), 2000); });
   }, []);

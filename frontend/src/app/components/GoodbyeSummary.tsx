@@ -6,17 +6,25 @@ import { ShubhAvatar } from './ShubhAvatar';
 
 interface GoodbyeSummaryProps {
   visible: boolean;
+  summary?: string;
+  schemesFound?: number;
+  totalBenefit?: number;
   onClose: () => void;
 }
 
-export function GoodbyeSummary({ visible, onClose }: GoodbyeSummaryProps) {
+export function GoodbyeSummary({ visible, summary, schemesFound, totalBenefit, onClose }: GoodbyeSummaryProps) {
   const { lang } = useLang();
   const { gapValue, schemes } = useApp();
 
+  const displayBenefit = totalBenefit ?? gapValue;
+  const displayCount = schemesFound ?? schemes.length;
+
   const handleSave = () => {
     localStorage.setItem('js_last_session', JSON.stringify({
-      action: lang === 'hi' ? 'CSC jaana tha PM-KISAN ke liye' : 'Visit CSC for PM-KISAN',
-      date: new Date().toISOString(),
+      summary: summary || 'Session completed',
+      schemesFound: displayCount,
+      totalBenefit: displayBenefit,
+      timestamp: Date.now(),
     }));
     onClose();
   };
@@ -61,11 +69,11 @@ export function GoodbyeSummary({ visible, onClose }: GoodbyeSummaryProps) {
                   className="text-[#138808]"
                   style={{ fontFamily: 'Lora, serif', fontSize: '28px', fontWeight: 700 }}
                 >
-                  ₹{gapValue.toLocaleString('en-IN')}
+                  ₹{displayBenefit.toLocaleString('en-IN')}
                 </p>
                 <p className="text-white/60 mt-1" style={{ fontSize: '12px' }}>
-                  {schemes.length} {lang === 'hi' ? 'योजनाएं' : 'schemes'}
-                  {schemes.slice(0, 3).map(s => ` • ${lang === 'hi' ? s.nameHi : s.name}`).join('')}
+                  {displayCount} {lang === 'hi' ? 'योजनाएं' : 'schemes'}
+                  {schemes.slice(0, 3).map(s => ` • ${lang === 'hi' ? (s.name_hindi || s.name_english) : s.name_english}`).join('')}
                 </p>
               </div>
 
