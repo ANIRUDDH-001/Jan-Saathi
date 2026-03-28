@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { useLang } from '../context/LanguageContext';
 import { useApp } from '../context/AppContext';
@@ -67,6 +67,7 @@ export function Schemes() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [listeningTo, setListeningTo] = useState<string | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState<Record<string, number>>({});
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const domains = ['All', 'Agriculture', 'Health', 'Education', 'Employment', 'Social welfare'];
   const domainKeys = ['filter.all', 'filter.agriculture', 'filter.health', 'filter.education', 'filter.employment', 'filter.social'];
@@ -76,6 +77,11 @@ export function Schemes() {
     .sort((a, b) => sort === 'highest' ? b.benefit - a.benefit : sort === 'best' ? b.matchConfidence - a.matchConfidence : a.steps.length - b.steps.length);
 
   const handleListenToGuide = (schemeId: string, stepsCount: number) => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
     if (listeningTo === schemeId) {
       // Stop listening
       setListeningTo(null);
@@ -87,18 +93,25 @@ export function Schemes() {
       
       // Step through each step (1.5 seconds per step)
       let stepIdx = 0;
-      const interval = setInterval(() => {
+      intervalRef.current = setInterval(() => {
         stepIdx++;
         if (stepIdx < stepsCount) {
           setCurrentStepIndex(prev => ({ ...prev, [schemeId]: stepIdx }));
         } else {
-          clearInterval(interval);
+          clearInterval(intervalRef.current!);
+          intervalRef.current = null;
           setListeningTo(null);
           setCurrentStepIndex(prev => ({ ...prev, [schemeId]: 0 }));
         }
       }, 1500);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, []);
 
   if (schemes.length === 0) {
     return (

@@ -48,10 +48,18 @@ export function ShubhAvatar({
   variant = 'hero',
 }: ShubhAvatarProps) {
   const [blinking, setBlinking] = useState(false);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth < 640 : false
+  );
 
   const actualSize = variant === 'chat' ? 32 : variant === 'profile' ? 64 : size;
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const responsiveSize = variant === 'hero' && isMobile ? 120 : actualSize;
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const blink = () => {

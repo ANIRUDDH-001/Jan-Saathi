@@ -1,5 +1,5 @@
 {
-  "name": "@figma/my-make-file",
+  "name": "jan-saathi-frontend",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -9,11 +9,6 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@emotion/react": "11.14.0",
-    "@emotion/styled": "11.14.1",
-    "@mui/icons-material": "7.3.5",
-    "@mui/material": "7.3.5",
-    "@popperjs/core": "2.11.8",
     "@radix-ui/react-accordion": "1.2.3",
     "@radix-ui/react-alert-dialog": "1.1.6",
     "@radix-ui/react-aspect-ratio": "1.1.2",
@@ -50,11 +45,12 @@
     "lucide-react": "0.487.0",
     "motion": "12.23.24",
     "next-themes": "0.4.6",
+    "react": "18.3.1",
     "react-day-picker": "8.10.1",
     "react-dnd": "16.0.1",
     "react-dnd-html5-backend": "16.0.1",
     "react-hook-form": "7.55.0",
-    "react-popper": "2.3.0",
+    "react-dom": "18.3.1",
     "react-resizable-panels": "2.1.7",
     "react-responsive-masonry": "2.7.1",
     "react-router": "7.13.0",
@@ -69,24 +65,14 @@
     "@tailwindcss/vite": "4.1.12",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1",
     "@types/node": "^25.5.0",
     "@vitejs/plugin-react": "4.7.0",
     "jsdom": "^26.1.0",
     "tailwindcss": "4.1.12",
     "vite": "6.3.5",
     "vitest": "^3.2.1"
-  },
-  "peerDependencies": {
-    "react": "18.3.1",
-    "react-dom": "18.3.1"
-  },
-  "peerDependenciesMeta": {
-    "react": {
-      "optional": true
-    },
-    "react-dom": {
-      "optional": true
-    }
   },
   "pnpm": {
     "overrides": {

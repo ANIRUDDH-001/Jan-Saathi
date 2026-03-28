@@ -5,18 +5,22 @@ import { languageInfo, type Lang } from '../context/LanguageContext';
 interface LanguageDetectionBannerProps {
   detectedLang: Lang;
   visible: boolean;
+  onClose: () => void;
 }
 
-export function LanguageDetectionBanner({ detectedLang, visible }: LanguageDetectionBannerProps) {
+export function LanguageDetectionBanner({ detectedLang, visible, onClose }: LanguageDetectionBannerProps) {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
     if (visible) {
       setShow(true);
-      const timer = setTimeout(() => setShow(false), 3000);
+      const timer = setTimeout(() => {
+        setShow(false);
+        onClose();
+      }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [visible]);
+  }, [visible, onClose]);
 
   const info = languageInfo[detectedLang];
 
@@ -39,6 +43,16 @@ export function LanguageDetectionBanner({ detectedLang, visible }: LanguageDetec
         >
           <span>🇮🇳</span>
           <span>{info.name} detected — वेद अब {info.nativeName} में बोलेगा</span>
+          <button
+            onClick={() => {
+              setShow(false);
+              onClose();
+            }}
+            className="ml-1 rounded px-1 leading-none hover:bg-white/10"
+            aria-label="Close language banner"
+          >
+            ✕
+          </button>
         </motion.div>
       )}
     </AnimatePresence>

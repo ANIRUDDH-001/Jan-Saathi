@@ -46,6 +46,7 @@ export function Chat() {
   const [showSilenceBar, setShowSilenceBar] = useState(false);
   const [detectedLang, setDetectedLang] = useState<string | null>(null);
   const [silenceWarningFired, setSilenceWarningFired] = useState(false);
+  const [userHasSpoken, setUserHasSpoken] = useState(false);
   const mediaRef = useRef<MediaRecorder | null>(null);
 
   // Progress bar step
@@ -69,24 +70,28 @@ export function Chat() {
 
   // Silence timer
   useEffect(() => {
-    if (messages.length === 0) return;
+    if (!userHasSpoken) return;
     const THRESHOLD = 30000;
+    const WARNING_START = 20000;
+
     const timer = setInterval(() => {
       const elapsed = Date.now() - lastInputTime;
-      if (elapsed > 20000 && chatState !== 'goodbye') {
+      if (elapsed > WARNING_START && chatState !== 'goodbye') {
         setShowSilenceBar(true);
-        setSilenceProgress(Math.min(1, (elapsed - 20000) / 10000));
+        setSilenceProgress(Math.min(1, (elapsed - WARNING_START) / (THRESHOLD - WARNING_START)));
       } else {
         setShowSilenceBar(false);
+        setSilenceProgress(0);
       }
       if (elapsed > THRESHOLD && chatState !== 'goodbye' && !silenceWarningFired) {
         setSilenceWarningFired(true);
         setShowGoodbye(true);
-        handleSend('bas');  // Trigger goodbye
+        handleSend('bas');
       }
-    }, 5000);
+    }, 1000);
+
     return () => clearInterval(timer);
-  }, [lastInputTime, chatState, messages.length, silenceWarningFired]);
+  }, [userHasSpoken, lastInputTime, chatState, silenceWarningFired]);
 
   const startRecording = async () => {
     try {
@@ -139,6 +144,7 @@ export function Chat() {
     const msg = text || input;
     if (!msg.trim()) return;
     setInput('');
+    if (!userHasSpoken) setUserHasSpoken(true);
     addMessage({ id: v4Fallback(), role: 'user', text: msg });
     setTyping(true);
     updateLastInputTime();
@@ -239,7 +245,11 @@ export function Chat() {
         <ChatProgressBar activeStep={progressStep as 0 | 1 | 2} profileProgress={profileProgress} />
 
         {/* Language Detection Banner */}
-        <LanguageDetectionBanner detectedLang={lang} visible={showLangBanner} />
+        <LanguageDetectionBanner
+          detectedLang={lang}
+          visible={showLangBanner}
+          onClose={() => setShowLangBanner(false)}
+        />
 
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
           <AnimatePresence>
@@ -262,6 +272,12 @@ export function Chat() {
                       <button 
                         className="text-muted-foreground hover:text-[#FF9933] transition-colors"
                         title={lang === 'hi' ? 'सुनें' : 'Listen'}
+                        onClick={async () => {
+                          if (msg.audioB64) {
+                            await playAudioB64(msg.audioB64);
+                          }
+                          // Phase 3: if no stored audio, call TTS API
+                        }}
                       >
                         <Volume2 className="w-4 h-4" />
                       </button>
