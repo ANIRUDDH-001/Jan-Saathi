@@ -7,12 +7,26 @@ import { JanSaathiLogo } from '../JanSaathiLogo';
 import { LanguageSelector } from '../LanguageSelector';
 import { motion } from 'motion/react';
 import { buttonPress } from '../../utils/animations';
+import { getGoogleAuthUrl } from '../../services/api';
+import { toast } from 'sonner';
 
 export function TopNav() {
   const { t } = useLang();
-  const { isLoggedIn, isAdmin, user, login, logout } = useApp();
+  const { isLoggedIn, isAdmin, user, logout } = useApp();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = React.useState(false);
+
+  const handleLogin = async () => {
+    // Phase 0: Demo placeholder — OAuth wired in Phase 3
+    // For demo, show a toast explaining OAuth is being wired
+    if (import.meta.env.VITE_DEMO_MODE === 'true') {
+      // Demo fallback: don't auto-login as admin
+      toast.error('Login via Google OAuth — wiring in progress');
+      return;
+    }
+    const url = await getGoogleAuthUrl();
+    window.location.href = url;
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-border shadow-sm">
@@ -51,7 +65,7 @@ export function TopNav() {
           {!isLoggedIn ? (
             <motion.button
               whileTap={buttonPress}
-              onClick={login}
+              onClick={handleLogin}
               className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition"
               style={{ fontSize: '0.875rem' }}
             >

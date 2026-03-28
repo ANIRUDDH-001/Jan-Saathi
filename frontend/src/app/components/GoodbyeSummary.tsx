@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useLang } from '../context/LanguageContext';
 import { useApp } from '../context/AppContext';
-import { VedAvatar } from './VedAvatar';
+import { ShubhAvatar } from './ShubhAvatar';
 
 interface GoodbyeSummaryProps {
   visible: boolean;
@@ -37,7 +37,7 @@ export function GoodbyeSummary({ visible, onClose }: GoodbyeSummaryProps) {
         >
           <div className="flex flex-col items-center px-6 py-8 h-full overflow-y-auto">
             {/* Ved Avatar */}
-            <VedAvatar size={80} showPlatform />
+            <ShubhAvatar size={80} showPlatform />
 
             {/* Heading */}
             <h2

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 
-interface VedAvatarProps {
+interface ShubhAvatarProps {
   size?: number;
   speaking?: boolean;
   listening?: boolean;
@@ -38,7 +38,7 @@ const F = {
   skinMouth: '#d08f6a',
 };
 
-export function VedAvatar({
+export function ShubhAvatar({
   size = 300,
   speaking = false,
   listening = false,
@@ -46,7 +46,7 @@ export function VedAvatar({
   showLabel = false,
   showPlatform = false,
   variant = 'hero',
-}: VedAvatarProps) {
+}: ShubhAvatarProps) {
   const [blinking, setBlinking] = useState(false);
 
   const actualSize = variant === 'chat' ? 32 : variant === 'profile' ? 64 : size;
@@ -340,7 +340,7 @@ export function VedAvatar({
 
       {showLabel && (
         <div className="text-center mt-2">
-          <p style={{ fontFamily: 'Lora, serif', fontSize: '18px', color: 'white', opacity: 0.8 }}>वेद</p>
+          <p style={{ fontFamily: 'Lora, serif', fontSize: '18px', color: 'white', opacity: 0.8 }}>शुभ</p>
           <p style={{ fontFamily: 'Manrope, sans-serif', fontSize: '12px', color: 'white', opacity: 0.5 }}>Jan Saathi</p>
         </div>
       )}
@@ -348,7 +348,7 @@ export function VedAvatar({
   );
 }
 
-export function VedAvatarSmall({ speaking = false, processing = false }: { speaking?: boolean; processing?: boolean }) {
+export function ShubhAvatarSmall({ speaking = false, processing = false }: { speaking?: boolean; processing?: boolean }) {
   const [blinking, setBlinking] = useState(false);
 
   useEffect(() => {
@@ -394,7 +394,7 @@ export function VedAvatarSmall({ speaking = false, processing = false }: { speak
       <div className="relative w-full h-full">
         <img
           src={AVATAR_IMAGE_SRC}
-          alt="Ved avatar"
+          alt="Shubh avatar"
           className="w-full h-full object-cover"
           style={{
             opacity: processing ? 0.8 : 1,
@@ -492,7 +492,7 @@ export function VedAvatarSmall({ speaking = false, processing = false }: { speak
   );
 }
 
-export function VedAvatarProfile({ speaking = false, processing = false }: { speaking?: boolean; processing?: boolean }) {
+export function ShubhAvatarProfile({ speaking = false, processing = false }: { speaking?: boolean; processing?: boolean }) {
   return (
     <div className="relative w-16 h-16 flex-shrink-0">
       {speaking && (
@@ -519,7 +519,7 @@ export function VedAvatarProfile({ speaking = false, processing = false }: { spe
         />
       )}
 
-      <VedAvatar size={64} speaking={speaking} processing={processing} variant="profile" />
+      <ShubhAvatar size={64} speaking={speaking} processing={processing} variant="profile" />
     </div>
   );
 }

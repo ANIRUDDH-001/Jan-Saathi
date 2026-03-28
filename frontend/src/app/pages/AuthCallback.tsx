@@ -6,7 +6,7 @@ import { handleGoogleCallback } from '../services/api';
 export function AuthCallback() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const { loginWithToken } = useApp();
+  const { login } = useApp();
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -15,8 +15,13 @@ export function AuthCallback() {
     handleGoogleCallback(code)
       .then(d => {
         if (!d.token) throw new Error('No token');
-        loginWithToken(d.token, d.user);
-        navigate(d.user.role === 'admin' ? '/admin/dashboard' : '/chat');
+        login({
+          name: d.user.name,
+          email: d.user.email,
+          token: d.token,
+        });
+        const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || 'aniruddhvijay2k7@gmail.com';
+        navigate(d.user.email === adminEmail ? '/admin/dashboard' : '/chat');
       })
       .catch(e => { setError(e.message); setTimeout(() => navigate('/'), 2000); });
   }, []);

@@ -13,7 +13,7 @@ import { ChatProgressBar } from '../components/ChatProgressBar';
 import { OccupationCards } from '../components/OccupationCards';
 import { LanguageDetectionBanner } from '../components/LanguageDetectionBanner';
 import { GoodbyeSummary } from '../components/GoodbyeSummary';
-import { VedAvatarSmall } from '../components/VedAvatar';
+import { ShubhAvatarSmall } from '../components/ShubhAvatar';
 import { motion, AnimatePresence } from 'motion/react';
 import { sendChatMessage, transcribeAudio } from '../services/api';
 
@@ -258,7 +258,7 @@ export function Chat() {
                 }`}>
                   {msg.role === 'bot' && (
                     <div className="flex items-center gap-2 mb-2">
-                      <VedAvatarSmall />
+                      <ShubhAvatarSmall />
                       <button 
                         className="text-muted-foreground hover:text-[#FF9933] transition-colors"
                         title={lang === 'hi' ? 'सुनें' : 'Listen'}
@@ -283,7 +283,7 @@ export function Chat() {
               className="flex justify-start"
             >
               <div className="bg-white/80 backdrop-blur-sm border border-border rounded-2xl rounded-bl-md px-5 py-4 shadow-md flex items-center gap-3">
-                <VedAvatarSmall processing={true} />
+                <ShubhAvatarSmall processing={true} />
                 <div className="flex gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#FF9933] animate-bounce" style={{ animationDelay: '0ms' }} />
                   <span className="w-2.5 h-2.5 rounded-full bg-[#FF9933] animate-bounce" style={{ animationDelay: '150ms' }} />

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { useLang } from '../context/LanguageContext';
-import { VedAvatar } from '../components/VedAvatar';
+import { ShubhAvatar } from '../components/ShubhAvatar';
 import { synthesizeSpeech, detectLocation } from '../services/api';
 
 async function playAudioB64(b64: string) {
@@ -17,11 +17,11 @@ async function playAudioB64(b64: string) {
   return new Promise<void>(resolve => { src.onended = () => resolve(); src.start(); });
 }
 
-export function VedEntry() {
+export function AudioEntry() {
   const { t, lang } = useLang();
   const navigate = useNavigate();
   const [showPill, setShowPill] = useState(false);
-  const [vedState, setVedState] = useState<'idle' | 'speaking' | 'listening'>('idle');
+  const [audioState, setAudioState] = useState<'idle' | 'speaking' | 'listening'>('idle');
   const [hasSession, setHasSession] = useState(false);
   const [lastAction, setLastAction] = useState<string | null>(null);
 
@@ -51,10 +51,10 @@ export function VedEntry() {
       } catch {}
 
       // TTS greeting
-      setVedState('speaking');
+      setAudioState('speaking');
       const text = savedSessionHas && savedSessionAction
         ? `Namaste! Pichli baar aapko ${savedSessionAction} karna tha. Kya ho gaya?`
-        : 'Namaste! Main Ved hoon, aapka Jan Saathi. Bataiye — kahan se hain, aur kya karte hain?';
+        : 'Namaste! Main Shubh hoon, aapka Jan Saathi. Bataiye — kahan se hain, aur kya karte hain?';
 
       try {
         const audio_b64 = await synthesizeSpeech(text, 'hi');
@@ -63,7 +63,7 @@ export function VedEntry() {
         }
       } catch {}
 
-      setVedState('listening');
+      setAudioState('listening');
       setTimeout(() => setShowPill(true), 2500);
     };
     init();
@@ -98,16 +98,16 @@ export function VedEntry() {
         }}
       />
 
-      {/* Ved Avatar */}
+      {/* Shubh Avatar */}
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8, ease: 'easeOut' }}
       >
-        <VedAvatar
+        <ShubhAvatar
           size={400}
-          speaking={vedState === 'speaking'}
-          listening={vedState === 'listening'}
+          speaking={audioState === 'speaking'}
+          listening={audioState === 'listening'}
           showLabel
           showPlatform
         />

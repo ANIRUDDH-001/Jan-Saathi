@@ -50,7 +50,7 @@ vi.mock('../app/context/LanguageContext', () => ({
 // ── Static imports — all dependencies are mocked above ──────────────────────
 import React from 'react';
 import { ChatProgressBar } from '../app/components/ChatProgressBar';
-import { VedAvatar } from '../app/components/VedAvatar';
+import { ShubhAvatar } from '../app/components/ShubhAvatar';
 import { GapCard } from '../app/components/GapCard';
 
 describe('ChatProgressBar', () => {
@@ -65,14 +65,14 @@ describe('ChatProgressBar', () => {
   });
 });
 
-describe('VedAvatar', () => {
+describe('ShubhAvatar', () => {
   it('renders without crashing', () => {
-    render(<VedAvatar size={100} />);
+    render(<ShubhAvatar size={100} />);
     expect(document.body).toBeTruthy();
   });
 
   it('renders with speaking=true', () => {
-    render(<VedAvatar size={100} speaking={true} />);
+    render(<ShubhAvatar size={100} speaking={true} />) ;
     expect(document.body).toBeTruthy();
   });
 });

@@ -1,22 +1,22 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 
 /**
- * AvatarCalibrator — Interactive tool to position eyes & mouth on the Ved avatar image.
+ * AvatarCalibrator — Interactive tool to position eyes & mouth on the Shubh avatar image.
  *
  * Drag the colored circles to align them over the character's actual eyes and mouth.
  * When you're happy, click "Copy F values" to get the coordinates object
- * that you can paste directly into VedAvatar.tsx.
+ * that you can paste directly into ShubhAvatar.tsx.
  *
  * Route: /calibrate
  */
 
 const AVATAR_IMAGE_SRC = '/assets/ved_avatar_cutout.png';
 
-// The fixed canvas dimensions used in VedAvatar's SVG viewBox
+// The fixed canvas dimensions used in ShubhAvatar's SVG viewBox
 const CANVAS_W = 380;
 const CANVAS_H = 422;
 
-// Display size for calibration (3× the avatar in VedEntry)
+// Display size for calibration (3× the avatar in AudioEntry)
 const DISPLAY_SIZE = 600;
 
 interface DragPoint {
@@ -580,7 +580,7 @@ export function AvatarCalibrator() {
         </div>
 
         {/* Output */}
-        <h3 style={{ color: '#FF9933', marginBottom: 8 }}>📋 Output — Copy to VedAvatar.tsx</h3>
+        <h3 style={{ color: '#FF9933', marginBottom: 8 }}>📋 Output — Copy to ShubhAvatar.tsx</h3>
         <pre
           style={{
             background: '#1a1a1a',

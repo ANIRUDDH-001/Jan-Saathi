@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { useLang } from '../context/LanguageContext';
 import { useApp } from '../context/AppContext';
 import { Edit2, Save, Trash2 } from 'lucide-react';
-import { VedAvatarProfile } from '../components/VedAvatar';
+import { ShubhAvatarProfile } from '../components/ShubhAvatar';
 
 export function Profile() {
   const { t } = useLang();
@@ -50,8 +50,8 @@ export function Profile() {
     <div className="max-w-3xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
-        {/* Use VedAvatarProfile for a professional look */}
-        <VedAvatarProfile />
+        {/* Use ShubhAvatarProfile for a professional look */}
+        <ShubhAvatarProfile />
         <div>
           <h1 style={{ fontWeight: 700 }}>{user?.name}</h1>
           <p className="text-muted-foreground" style={{ fontSize: '0.85rem' }}>{user?.email}</p>

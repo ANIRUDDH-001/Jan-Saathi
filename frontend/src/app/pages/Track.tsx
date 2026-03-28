@@ -3,7 +3,7 @@ import { useLang } from '../context/LanguageContext';
 import { useApp } from '../context/AppContext';
 import { Search, Check, Clock, AlertCircle, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
-import { VedAvatarSmall } from '../components/VedAvatar';
+import { ShubhAvatarSmall } from '../components/ShubhAvatar';
 import { trackApplication, getSessionApplications } from '../services/api';
 
 export function Track() {
@@ -151,7 +151,7 @@ export function Track() {
                         transition={{ type: 'spring', stiffness: 300 }}
                         className="absolute -top-5"
                       >
-                        <VedAvatarSmall />
+                        <ShubhAvatarSmall />
                       </motion.div>
                     )}
 

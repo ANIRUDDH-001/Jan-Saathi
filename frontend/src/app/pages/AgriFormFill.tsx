@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useLang } from '../context/LanguageContext';
 import { useApp } from '../context/AppContext';
 import { submitApplication } from '../services/api';
-import { VedAvatar } from '../components/VedAvatar';
+import { ShubhAvatar } from '../components/ShubhAvatar';
 import { Check, Download, Eye, ExternalLink, X, Mic } from 'lucide-react';
 
 type FormStep = 'summary' | 'correction' | 'confirm' | 'generating' | 'success';
@@ -101,7 +101,7 @@ export function AgriFormFill() {
       {/* Left: Chat panel area */}
       <div className="hidden md:flex flex-1 items-center justify-center bg-gradient-to-br from-background to-white border-r border-border">
         <div className="text-center px-8">
-          <VedAvatar size={100} speaking={step === 'summary' || step === 'generating'} />
+          <ShubhAvatar size={100} speaking={step === 'summary' || step === 'generating'} />
           <p className="text-[#000080] mt-4" style={{ fontFamily: 'Lora, serif', fontSize: '18px', fontWeight: 600 }}>
             {step === 'summary' && (lang === 'hi' ? 'वेद आपकी जानकारी पढ़ रहा है...' : 'Ved is reading your details...')}
             {step === 'correction' && (lang === 'hi' ? 'बदलाव करें...' : 'Make corrections...')}
@@ -275,7 +275,7 @@ export function AgriFormFill() {
               exit={{ opacity: 0 }}
               className="flex flex-col items-center justify-center min-h-[60vh]"
             >
-              <VedAvatar size={120} speaking />
+              <ShubhAvatar size={120} speaking />
 
               {/* Pencil animation */}
               <div className="mt-6 w-48 h-1 bg-muted rounded-full overflow-hidden">

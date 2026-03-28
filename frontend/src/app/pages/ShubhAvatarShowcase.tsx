@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { VedAvatar, VedAvatarSmall, VedAvatarProfile } from '../components/VedAvatar';
+import { ShubhAvatar, ShubhAvatarSmall, ShubhAvatarProfile } from '../components/ShubhAvatar';
 
 /**
- * Ved Avatar Showcase - Demo page for all avatar variants and states
+ * Shubh Avatar Showcase - Demo page for all avatar variants and states
  * This component is for development/testing purposes only
- * Shows all possible combinations of Ved avatar configurations
+ * Shows all possible combinations of Shubh avatar configurations
  */
-export function VedAvatarShowcase() {
+export function ShubhAvatarShowcase() {
   const [heroSpeaking, setHeroSpeaking] = useState(false);
   const [heroListening, setHeroListening] = useState(false);
   const [heroProcessing, setHeroProcessing] = useState(false);
@@ -14,7 +14,7 @@ export function VedAvatarShowcase() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-12 space-y-16">
       <div className="text-center">
-        <h1 className="text-4xl font-bold text-[#000080] mb-2">Ved Avatar Showcase</h1>
+        <h1 className="text-4xl font-bold text-[#000080] mb-2">Shubh Avatar Showcase</h1>
         <p className="text-muted-foreground">All variants and states of the Jan Saathi avatar</p>
       </div>
 
@@ -23,7 +23,7 @@ export function VedAvatarShowcase() {
         <h2 className="text-2xl font-semibold text-[#000080] mb-6">Hero Avatar (160px)</h2>
         
         <div className="bg-gradient-to-br from-[#FF9933]/10 via-white to-[#138808]/10 rounded-lg p-12 flex justify-center items-center min-h-[400px]">
-          <VedAvatar 
+          <ShubhAvatar 
             size={160}
             variant="hero"
             speaking={heroSpeaking}
@@ -96,7 +96,7 @@ export function VedAvatarShowcase() {
         
         <div className="space-y-6">
           <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
-            <VedAvatarProfile />
+            <ShubhAvatarProfile />
             <div>
               <h3 className="font-semibold">Ramesh Kumar</h3>
               <p className="text-sm text-muted-foreground">ramesh@example.com</p>
@@ -105,17 +105,17 @@ export function VedAvatarShowcase() {
           </div>
 
           <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
-            <VedAvatarProfile speaking={true} />
+            <ShubhAvatarProfile speaking={true} />
             <div>
-              <h3 className="font-semibold">Ved is Speaking</h3>
+              <h3 className="font-semibold">Shubh is Speaking</h3>
               <p className="text-sm text-muted-foreground">With pulse animation</p>
             </div>
           </div>
 
           <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
-            <VedAvatarProfile processing={true} />
+            <ShubhAvatarProfile processing={true} />
             <div>
-              <h3 className="font-semibold">Ved is Processing</h3>
+              <h3 className="font-semibold">Shubh is Processing</h3>
               <p className="text-sm text-muted-foreground">With loading state</p>
             </div>
           </div>
@@ -129,23 +129,23 @@ export function VedAvatarShowcase() {
         <div className="space-y-4 max-w-2xl">
           {/* Normal message */}
           <div className="flex gap-2">
-            <VedAvatarSmall />
+            <ShubhAvatarSmall />
             <div className="bg-white border border-border rounded-2xl rounded-bl-md px-5 py-3 shadow-md">
-              <p className="text-sm">नमस्ते! मैं वेद हूं, आपका जन साथी। मुझे बताएं — आप कहां रहते हैं?</p>
+              <p className="text-sm">नमस्ते! मैं शुभ हूं, आपका जन साथी। मुझे बताएं — आप कहां रहते हैं?</p>
             </div>
           </div>
 
           {/* Speaking message */}
           <div className="flex gap-2">
-            <VedAvatarSmall speaking={true} />
+            <ShubhAvatarSmall speaking={true} />
             <div className="bg-white border border-border rounded-2xl rounded-bl-md px-5 py-3 shadow-md">
-              <p className="text-sm">Ved is speaking with pulse animation...</p>
+              <p className="text-sm">Shubh is speaking with pulse animation...</p>
             </div>
           </div>
 
           {/* Processing/Typing */}
           <div className="flex gap-2">
-            <VedAvatarSmall processing={true} />
+            <ShubhAvatarSmall processing={true} />
             <div className="bg-white border border-border rounded-2xl rounded-bl-md px-5 py-4 shadow-md">
               <div className="flex gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#FF9933] animate-bounce" />
@@ -164,42 +164,42 @@ export function VedAvatarShowcase() {
         <div className="flex flex-wrap items-end justify-center gap-8">
           <div className="text-center">
             <div className="mb-2">
-              <VedAvatarSmall />
+              <ShubhAvatarSmall />
             </div>
             <p className="text-sm text-muted-foreground">32px</p>
           </div>
 
           <div className="text-center">
             <div className="mb-2">
-              <VedAvatar size={64} />
+              <ShubhAvatar size={64} />
             </div>
             <p className="text-sm text-muted-foreground">64px</p>
           </div>
 
           <div className="text-center">
             <div className="mb-2">
-              <VedAvatar size={80} />
+              <ShubhAvatar size={80} />
             </div>
             <p className="text-sm text-muted-foreground">80px</p>
           </div>
 
           <div className="text-center">
             <div className="mb-2">
-              <VedAvatar size={100} />
+              <ShubhAvatar size={100} />
             </div>
             <p className="text-sm text-muted-foreground">100px</p>
           </div>
 
           <div className="text-center">
             <div className="mb-2">
-              <VedAvatar size={120} />
+              <ShubhAvatar size={120} />
             </div>
             <p className="text-sm text-muted-foreground">120px</p>
           </div>
 
           <div className="text-center">
             <div className="mb-2">
-              <VedAvatar size={160} />
+              <ShubhAvatar size={160} />
             </div>
             <p className="text-sm text-muted-foreground">160px</p>
           </div>
@@ -213,7 +213,7 @@ export function VedAvatarShowcase() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="text-center">
             <div className="bg-muted/30 rounded-lg p-6 flex items-center justify-center min-h-[200px]">
-              <VedAvatar size={100} />
+              <ShubhAvatar size={100} />
             </div>
             <p className="mt-3 font-medium">Idle</p>
             <p className="text-xs text-muted-foreground">Breathing glow, random blinks</p>
@@ -221,7 +221,7 @@ export function VedAvatarShowcase() {
 
           <div className="text-center">
             <div className="bg-muted/30 rounded-lg p-6 flex items-center justify-center min-h-[200px]">
-              <VedAvatar size={100} speaking={true} />
+              <ShubhAvatar size={100} speaking={true} />
             </div>
             <p className="mt-3 font-medium">Speaking</p>
             <p className="text-xs text-muted-foreground">Pulse ring, mouth movement</p>
@@ -229,7 +229,7 @@ export function VedAvatarShowcase() {
 
           <div className="text-center">
             <div className="bg-muted/30 rounded-lg p-6 flex items-center justify-center min-h-[200px]">
-              <VedAvatar size={100} listening={true} />
+              <ShubhAvatar size={100} listening={true} />
             </div>
             <p className="mt-3 font-medium">Listening</p>
             <p className="text-xs text-muted-foreground">Softer pulse, no mouth</p>
@@ -237,7 +237,7 @@ export function VedAvatarShowcase() {
 
           <div className="text-center">
             <div className="bg-muted/30 rounded-lg p-6 flex items-center justify-center min-h-[200px]">
-              <VedAvatar size={100} processing={true} />
+              <ShubhAvatar size={100} processing={true} />
             </div>
             <p className="mt-3 font-medium">Processing</p>
             <p className="text-xs text-muted-foreground">Loading ring, desaturated</p>
@@ -253,10 +253,10 @@ export function VedAvatarShowcase() {
           <div>
             <h3 className="font-semibold mb-3">Hero Section</h3>
             <pre className="bg-muted p-4 rounded-lg text-xs overflow-x-auto">
-{`<VedAvatar 
+{`<ShubhAvatar 
   size={160} 
   variant="hero"
-  speaking={isVedSpeaking}
+  speaking={isShubhSpeaking}
   showLabel={true}
   showPlatform={true}
 />`}
@@ -267,7 +267,7 @@ export function VedAvatarShowcase() {
             <h3 className="font-semibold mb-3">Chat Message</h3>
             <pre className="bg-muted p-4 rounded-lg text-xs overflow-x-auto">
 {`<div className="flex gap-2">
-  <VedAvatarSmall speaking={message.isSpeaking} />
+  <ShubhAvatarSmall speaking={message.isSpeaking} />
   <div>{message.text}</div>
 </div>`}
             </pre>
@@ -277,7 +277,7 @@ export function VedAvatarShowcase() {
             <h3 className="font-semibold mb-3">Profile Header</h3>
             <pre className="bg-muted p-4 rounded-lg text-xs overflow-x-auto">
 {`<div className="flex items-center gap-4">
-  <VedAvatarProfile />
+  <ShubhAvatarProfile />
   <div>
     <h1>{user.name}</h1>
     <p>{user.email}</p>
@@ -289,7 +289,7 @@ export function VedAvatarShowcase() {
           <div>
             <h3 className="font-semibold mb-3">Processing State</h3>
             <pre className="bg-muted p-4 rounded-lg text-xs overflow-x-auto">
-{`<VedAvatar 
+{`<ShubhAvatar 
   size={100} 
   processing={isLoading}
 />`}
