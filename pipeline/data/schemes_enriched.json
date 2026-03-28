@@ -30,7 +30,7 @@
       "age_min": 18,
       "age_max": null,
       "aadhaar_required": true,
-      "bank_account_required": true,
+      "bank_account_required": true,  
       "bpl_card_required": false,
       "excluded_categories": [],
       "states_excluded": [],

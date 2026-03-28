@@ -1,44 +1,148 @@
-"""Pytest configuration and global mocking."""
+"""conftest.py — shared fixtures for all backend tests."""
 import pytest
-from unittest.mock import patch, AsyncMock, MagicMock
+import sys
+import os
+from fastapi.testclient import TestClient
+from unittest.mock import MagicMock, AsyncMock
 
-@pytest.fixture(autouse=True)
-def mock_all_external_services():
-    """Mock out all external service calls for tests so we don't hit real APIs."""
-    
-    # Supabase mocks
-    with patch("app.services.supabase_db.get_or_create_session", return_value={"session_id": "test", "profile": {}}) as m_sess, \
-         patch("app.services.supabase_db.update_session", return_value=None), \
-         patch("app.services.supabase_db.save_anonymous_query", return_value=None), \
-         patch("app.services.supabase_db.match_schemes", return_value=[{"scheme_id": "uuid-123", "name_english": "Test Scheme", "has_monetary_benefit": True, "benefit_annual_inr": 6000}]), \
-         patch("app.services.supabase_db.create_application", return_value={"reference_number": "JAN-2026-00001", "status": "submitted", "submitted_at": "2026-01-01"}), \
-         patch("app.services.supabase_db.get_application", return_value={"reference_number": "JAN-2026-00001"}), \
-         patch("app.services.supabase_db.get_admin_stats", return_value={"total_sessions": 100}), \
-         patch("app.services.supabase_db.get_db") as m_get_db:
-             
-        # Configure get_db mock for direct table querying used in schemes/applications etc.
-        db_client = MagicMock()
-        db_client.table().select().eq().execute.return_value = MagicMock(data=[{"id": "uuid-123", "acronym": "TEST", "name_english": "Test Scheme"}])
-        db_client.table().select().eq().limit().execute.return_value = MagicMock(data=[{"id": "uuid-123"}])
-        db_client.rpc().execute.return_value = MagicMock(data=[{"total": 100}])
-        m_get_db.return_value = db_client
-        
-        # Groq mocks
-        with patch("app.services.groq_llm.process_intake", return_value={"extracted": {"state": "uttar_pradesh", "occupation_subtype": "crop_farmer", "age": 45}, "ready_to_match": True, "next_question_in_language": "Aap kahan se hain?"}), \
-             patch("app.services.groq_llm.generate_gap_announcement", return_value={"gap_announcement": "Hi", "top_3_summary": "Top 3"}), \
-             patch("app.services.groq_llm.classify_goodbye_intent", return_value=False) as m_goodbye, \
-             patch("app.services.groq_llm.generate_goodbye_summary", return_value="Goodbye!"):
-            
-            # Special logic for goodbye intent in test_chat
-            def goodbye_side_effect(msg):
-                return "dhanyawaad" in msg.lower() or "bye" in msg.lower()
-            m_goodbye.side_effect = goodbye_side_effect
+# Ensure backend root is on path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-            # Cohere mock
-            with patch("app.services.cohere_embed.embed_query", return_value=[0.1]*1024):
-                
-                # Sarvam mocks (Async)
-                with patch("app.services.sarvam.transcribe", new_callable=AsyncMock, return_value={"transcript": "Test transcript", "language_code": "hi-IN", "language_short": "hi", "confidence": 0.99}), \
-                     patch("app.services.sarvam.text_to_speech", new_callable=AsyncMock, return_value="base64audio"):
-                     
-                    yield
+
+# ── Shared mock data ──────────────────────────────────────────────────────────
+MOCK_SCHEMES = [{
+    "scheme_id": "pradhan-mantri-kisan-samman-nidhi-pm-kisan-nationa",
+    "name_english": "Pradhan Mantri Kisan Samman Nidhi (PM-KISAN)",
+    "name_hindi":   "प्रधानमंत्री किसान सम्मान निधि",
+    "acronym": "PM-KISAN", "level": "central", "state": "national",
+    "ministry": "Ministry of Agriculture and Farmers Welfare",
+    "has_monetary_benefit": True, "benefit_annual_inr": 6000,
+    "eligibility_summary": "All landholding farmers eligible.",
+    "spoken_content": {"hi": {"gap_announcement": "PM-KISAN से साल में ₹6,000 मिलेंगे।"}},
+    "form_field_mapping": {"form_name": "PM-KISAN-REG-2019", "fields": [
+        {"form_field_label": "Name of Farmer", "profile_field": "name",
+         "required": True, "shubh_question_hindi": "आपका पूरा नाम क्या है?"},
+    ]},
+    "portal_url": "https://pmkisan.gov.in/", "helpline_number": "155261",
+    "similarity": 0.92, "demo_ready": True,
+}]
+
+MOCK_APPLICATION = {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "reference_number": "JAN-2026-00001",
+    "session_id": "test-session",
+    "scheme_name": "Pradhan Mantri Kisan Samman Nidhi (PM-KISAN)",
+    "status": "submitted",
+    "submitted_at": "2026-03-28T10:00:00",
+    "expected_state_verify_date": "2026-04-04",
+    "expected_central_date": "2026-04-18",
+    "expected_benefit_date": "2026-05-12",
+    "form_data": {"name": "Ramesh Kumar"},
+    "status_history": [{"from_status": None, "to_status": "submitted",
+                        "changed_at": "2026-03-28T10:00:00"}],
+}
+
+MOCK_SESSION = {
+    "session_id": "test-session", "chat_state": "intake", "language": "hi",
+    "profile": {}, "matched_scheme_ids": [], "gap_value": 0,
+    "form_data": {}, "active_form_scheme": None, "last_session_summary": {},
+    "user_id": None,
+}
+
+MOCK_SESSION_MATCH = {
+    **MOCK_SESSION,
+    "chat_state": "match",
+    "profile": {"state": "uttar_pradesh", "occupation_subtype": "crop_farmer", "age": 45},
+    "matched_scheme_ids": ["pradhan-mantri-kisan-samman-nidhi-pm-kisan-nationa"],
+    "gap_value": 6000,
+}
+
+
+@pytest.fixture
+def client():
+    from main import app
+    return TestClient(app)
+
+
+@pytest.fixture
+def mock_db(monkeypatch):
+    """Mock all Supabase calls so tests run without live DB."""
+    from app.services import supabase_db as db_mod
+
+    monkeypatch.setattr(db_mod, "get_or_create_session", lambda sid: {**MOCK_SESSION, "session_id": sid})
+    monkeypatch.setattr(db_mod, "update_session", lambda *a, **k: None)
+    monkeypatch.setattr(db_mod, "save_anonymous_query", lambda *a, **k: None)
+    monkeypatch.setattr(db_mod, "match_schemes", lambda *a, **k: MOCK_SCHEMES)
+    monkeypatch.setattr(db_mod, "get_scheme_by_slug", lambda slug: MOCK_SCHEMES[0])
+    monkeypatch.setattr(db_mod, "get_scheme_by_db_id", lambda id: MOCK_SCHEMES[0])
+    monkeypatch.setattr(db_mod, "create_application", lambda **k: MOCK_APPLICATION)
+    monkeypatch.setattr(db_mod, "get_application", lambda ref: MOCK_APPLICATION)
+    monkeypatch.setattr(db_mod, "get_application_detail", lambda ref: MOCK_APPLICATION)
+    monkeypatch.setattr(db_mod, "get_session_applications", lambda sid: [MOCK_APPLICATION])
+    monkeypatch.setattr(db_mod, "get_session", lambda sid: MOCK_SESSION)
+    monkeypatch.setattr(db_mod, "get_admin_stats", lambda: {
+        "total_sessions": 42, "total_applications": 7, "total_schemes": 51})
+    return db_mod
+
+
+@pytest.fixture
+def mock_llm(monkeypatch):
+    """Mock Groq LLM calls — includes both function names (old + new)."""
+    from app.services import groq_llm as llm
+
+    def _process_intake(*a, **k):
+        return {
+            "extracted": {"state": "uttar_pradesh", "occupation_subtype": "crop_farmer", "age": 45},
+            "threshold_ready": True,
+            "next_question_hi": "Aap kahan se hain?",
+            "next_question_in_language": "Aap kahan se hain?",
+            "ready_to_match": True,
+        }
+
+    def _not_ready_intake(*a, **k):
+        return {
+            "extracted": {"state": "uttar_pradesh"},
+            "threshold_ready": False,
+            "next_question_hi": "Aapki umar kya hai?",
+            "next_question_in_language": "Aapki umar kya hai?",
+            "ready_to_match": False,
+        }
+
+    monkeypatch.setattr(llm, "process_intake", _process_intake)
+    monkeypatch.setattr(llm, "generate_gap_announcement", lambda *a, **k: {
+        "gap_announcement": "Aapko ₹6,000 per saal mil sakta hai.",
+        "top_3_summary": "PM-KISAN se ₹6,000.",
+        "top3_spoken": "PM-KISAN se ₹6,000.",
+    })
+    monkeypatch.setattr(llm, "generate_scheme_guidance", lambda *a, **k: {
+        "reply": "PM-KISAN ke liye CSC jaana hai. Aadhaar aur passbook lekar jaana.",
+        "suggest_form_fill": False, "form_fill_prompt": None, "follow_up": None,
+    })
+    monkeypatch.setattr(llm, "generate_goodbye_summary", lambda *a, **k: "Aaj bahut kuch hua. Kal CSC jaana.")
+    monkeypatch.setattr(llm, "classify_goodbye_intent", lambda msg: "bas" in msg.lower() or "bye" in msg.lower())
+    monkeypatch.setattr(llm, "is_goodbye", lambda msg: "bas" in msg.lower() or "bye" in msg.lower())
+    return llm
+
+
+@pytest.fixture
+def mock_embed(monkeypatch):
+    from app.services import cohere_embed as emb
+    monkeypatch.setattr(emb, "embed_query", lambda text: [0.1] * 1024)
+    return emb
+
+
+@pytest.fixture
+def mock_sarvam(monkeypatch):
+    """Mock Sarvam TTS — must be async, returns empty string."""
+    from app.services import sarvam
+
+    async def fake_text_to_speech(text, lang="hi-IN"):
+        return "UklGRiQAAABXQVZFZm10IBAAAA=="  # tiny valid WAV b64
+
+    async def fake_transcribe(audio, language_code="hi-IN"):
+        return {"transcript": "Main UP se hoon kisan hoon 45 saal",
+                "language_code": "hi-IN", "language_short": "hi"}
+
+    monkeypatch.setattr(sarvam, "text_to_speech", fake_text_to_speech)
+    monkeypatch.setattr(sarvam, "transcribe", fake_transcribe)
+    return sarvam

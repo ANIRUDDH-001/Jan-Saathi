@@ -1,100 +1,114 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { v4Fallback } from '../utils/uuid';
-
-export interface UserProfile {
-  state: string;
-  occupation: string;
-  age: string;
-  income: string;
-  category: string;
-  bpl: string;
-  gender: string;
-}
-
-export interface Scheme {
-  id: string;
-  slug: string;
-  name: string;
-  nameHi: string;
-  ministry: string;
-  ministryHi: string;
-  domain: string;
-  benefit: number;
-  matchConfidence: number;
-  description: string;
-  descriptionHi: string;
-  eligibility: { criterion: string; criterionHi: string; matched: boolean }[];
-  documents: { name: string; nameHi: string; source: string; sourceHi: string }[];
-  steps: { step: string; stepHi: string }[];
-  officeType: string;
-  officeTypeHi: string;
-  applyUrl?: string;
-}
+import type { SchemeResult } from '../services/api';
 
 export interface ChatMessage {
-  id: string;
-  role: 'bot' | 'user';
-  text: string;
-  isVoice?: boolean;
+  id: string; role: 'user'|'bot'; text: string; audioB64?: string; isVoice?: boolean;
 }
 
-type ChatState = 'intake' | 'match' | 'guide';
-
-interface AppContextType {
+interface AppState {
   sessionId: string;
   isLoggedIn: boolean;
   isAdmin: boolean;
-  user: { name: string; email: string; avatar: string } | null;
-  login: () => void;
-  logout: () => void;
-  profile: UserProfile;
-  setProfile: React.Dispatch<React.SetStateAction<UserProfile>>;
-  chatState: ChatState;
-  setChatState: React.Dispatch<React.SetStateAction<ChatState>>;
+  user: { id:string; email:string; name:string; role:string } | null;
   messages: ChatMessage[];
-  addMessage: (msg: ChatMessage) => void;
-  schemes: Scheme[];
-  setSchemes: React.Dispatch<React.SetStateAction<Scheme[]>>;
+  chatState: 'intake'|'match'|'guide'|'form_fill'|'goodbye';
+  profile: Record<string, unknown>;
+  schemes: SchemeResult[];
   gapValue: number;
-  setGapValue: React.Dispatch<React.SetStateAction<number>>;
-  applications: Record<string, { schemeName: string; status: 'submitted' | 'review' | 'approved' | 'rejected'; date: string; expected: string }>;
-  submitApplication: (schemeId: string, schemeName: string) => string;
+  currentLanguage: string;
+  isVoicePlaying: boolean;
+  lastInputTime: number;
+  applications: Record<string, unknown>;
+  activeSchemeId: string | null;
+  addMessage: (m: ChatMessage) => void;
+  setProfile: (p: Record<string, unknown>) => void;
+  mergeProfile: (p: Record<string, unknown>) => void;
+  setSchemes: (s: SchemeResult[]) => void;
+  setGapValue: (v: number) => void;
+  setChatState: (s: AppState['chatState']) => void;
+  setLanguage: (l: string) => void;
+  setVoicePlaying: (b: boolean) => void;
+  updateLastInputTime: () => void;
+  setActiveScheme: (id: string|null) => void;
+  loginWithToken: (token: string, user: AppState['user']) => void;
+  logout: () => void;
+  addApplication: (ref: string, data: unknown) => void;
 }
 
-const AppContext = createContext<AppContextType>({} as AppContextType);
+const Ctx = createContext<AppState>({} as AppState);
 
-const emptyProfile: UserProfile = { state: '', occupation: '', age: '', income: '', category: '', bpl: '', gender: '' };
-
-export function AppProvider({ children }: { children: ReactNode }) {
-  const [sessionId] = useState(() => localStorage.getItem('js_session_id') || (() => { const id = v4Fallback(); localStorage.setItem('js_session_id', id); return id; })());
+export function AppProvider({ children }: { children: React.ReactNode }) {
+  const [sessionId] = useState(() => {
+    const e = localStorage.getItem('js_session_id');
+    if (e) return e;
+    const n = v4Fallback();
+    localStorage.setItem('js_session_id', n);
+    return n;
+  });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [user, setUser] = useState<{ name: string; email: string; avatar: string } | null>(null);
-  const [profile, setProfile] = useState<UserProfile>(emptyProfile);
-  const [chatState, setChatState] = useState<ChatState>('intake');
+  const [user, setUser] = useState<AppState['user']>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [schemes, setSchemes] = useState<Scheme[]>([]);
+  const [chatState, setChatState] = useState<AppState['chatState']>('intake');
+  const [profile, setProfileState] = useState<Record<string,unknown>>({});
+  const [schemes, setSchemes] = useState<SchemeResult[]>([]);
   const [gapValue, setGapValue] = useState(0);
-  const [applications, setApplications] = useState<Record<string, any>>({});
+  const [currentLanguage, setCurrentLanguage] = useState('hi');
+  const [isVoicePlaying, setIsVoicePlaying] = useState(false);
+  const [lastInputTime, setLastInputTime] = useState(Date.now());
+  const [applications, setApplications] = useState<Record<string,unknown>>({});
+  const [activeSchemeId, setActiveSchemeId] = useState<string|null>(null);
 
-  const login = () => {
-    setIsLoggedIn(true);
-    setUser({ name: 'Aniruddh Vijay', email: 'aniruddhvijay2k7@gmail.com', avatar: '' });
-    setIsAdmin(true);
-  };
-  const logout = () => { setIsLoggedIn(false); setUser(null); setIsAdmin(false); };
-  const addMessage = (msg: ChatMessage) => setMessages(prev => [...prev, msg]);
-  const submitApplication = (schemeId: string, schemeName: string) => {
-    const ref = `JAN-2026-${String(Math.floor(Math.random() * 99999)).padStart(5, '0')}`;
-    setApplications(prev => ({ ...prev, [ref]: { schemeName, status: 'submitted', date: new Date().toLocaleDateString(), expected: '15 working days' } }));
-    return ref;
-  };
+  useEffect(() => {
+    const t = localStorage.getItem('js_auth_token');
+    const u = localStorage.getItem('js_user');
+    if (t && u) try { 
+      const parsedUser = JSON.parse(u);
+      setIsLoggedIn(true); 
+      setUser(parsedUser); 
+    } catch {}
+    const a = localStorage.getItem('js_applications');
+    if (a) try { setApplications(JSON.parse(a)); } catch {}
+  }, []);
+
+  const addMessage    = useCallback((m: ChatMessage) => setMessages(p => [...p, m]), []);
+  const setProfile    = useCallback((p: Record<string,unknown>) => setProfileState(p), []);
+  const mergeProfile  = useCallback((p: Record<string,unknown>) => setProfileState(prev => ({...prev,...p})), []);
+  const setLanguage   = useCallback((l: string) => setCurrentLanguage(l), []);
+  const updateLastInputTime = useCallback(() => setLastInputTime(Date.now()), []);
+  const setActiveScheme = useCallback((id: string|null) => setActiveSchemeId(id), []);
+
+  const loginWithToken = useCallback((token: string, u: AppState['user']) => {
+    localStorage.setItem('js_auth_token', token);
+    localStorage.setItem('js_user', JSON.stringify(u));
+    setIsLoggedIn(true); setUser(u);
+  }, []);
+
+  const logout = useCallback(() => {
+    localStorage.removeItem('js_auth_token');
+    localStorage.removeItem('js_user');
+    setIsLoggedIn(false); setUser(null);
+  }, []);
+
+  const addApplication = useCallback((ref: string, data: unknown) => {
+    setApplications(prev => {
+      const updated = {...prev, [ref]: data};
+      localStorage.setItem('js_applications', JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
 
   return (
-    <AppContext.Provider value={{ sessionId, isLoggedIn, isAdmin, user, login, logout, profile, setProfile, chatState, setChatState, messages, addMessage, schemes, setSchemes, gapValue, setGapValue, applications, submitApplication }}>
+    <Ctx.Provider value={{
+      sessionId, isLoggedIn, isAdmin: user?.role === 'admin', user, messages, chatState, profile, schemes, gapValue,
+      currentLanguage, isVoicePlaying, lastInputTime, applications, activeSchemeId,
+      addMessage, setProfile, mergeProfile, setSchemes, setGapValue, setChatState,
+      setLanguage, setVoicePlaying: setIsVoicePlaying, updateLastInputTime,
+      setActiveScheme, loginWithToken, logout, addApplication,
+    }}>
       {children}
-    </AppContext.Provider>
+    </Ctx.Provider>
   );
 }
 
-export const useApp = () => useContext(AppContext);
+export const useApp = () => useContext(Ctx);

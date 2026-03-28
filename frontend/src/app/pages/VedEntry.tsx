@@ -3,6 +3,19 @@ import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { useLang } from '../context/LanguageContext';
 import { VedAvatar } from '../components/VedAvatar';
+import { synthesizeSpeech, detectLocation } from '../services/api';
+
+async function playAudioB64(b64: string) {
+  const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  const buffer = await ctx.decodeAudioData(bytes.buffer);
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  src.connect(ctx.destination);
+  return new Promise<void>(resolve => { src.onended = () => resolve(); src.start(); });
+}
 
 export function VedEntry() {
   const { t, lang } = useLang();
@@ -13,25 +26,48 @@ export function VedEntry() {
   const [lastAction, setLastAction] = useState<string | null>(null);
 
   useEffect(() => {
+    let savedSessionAction = null;
+    let savedSessionHas = false;
+    
     // Check for returning user
     const savedSession = localStorage.getItem('js_last_session');
     if (savedSession) {
       try {
         const parsed = JSON.parse(savedSession);
+        savedSessionHas = true;
+        savedSessionAction = parsed.action || null;
         setHasSession(true);
-        setLastAction(parsed.action || null);
+        setLastAction(savedSessionAction);
       } catch {}
     }
 
-    // Simulate greeting TTS
-    setVedState('speaking');
-    const pillTimer = setTimeout(() => setShowPill(true), 2500);
-    const speakTimer = setTimeout(() => setVedState('idle'), 4000);
+    const init = async () => {
+      // IP geolocation — pre-fill state hint
+      try {
+        const loc = await detectLocation();
+        if (loc.detected && loc.state) {
+          localStorage.setItem('js_detected_state', loc.state);
+        }
+      } catch {}
 
-    return () => {
-      clearTimeout(pillTimer);
-      clearTimeout(speakTimer);
+      // TTS greeting
+      setVedState('speaking');
+      const text = savedSessionHas && savedSessionAction
+        ? `Namaste! Pichli baar aapko ${savedSessionAction} karna tha. Kya ho gaya?`
+        : 'Namaste! Main Ved hoon, aapka Jan Saathi. Bataiye — kahan se hain, aur kya karte hain?';
+
+      try {
+        const audio_b64 = await synthesizeSpeech(text, 'hi');
+        if (audio_b64) {
+          await playAudioB64(audio_b64);
+        }
+      } catch {}
+
+      setVedState('listening');
+      setTimeout(() => setShowPill(true), 2500);
     };
+    init();
+
   }, []);
 
   const handleEnterChat = () => {

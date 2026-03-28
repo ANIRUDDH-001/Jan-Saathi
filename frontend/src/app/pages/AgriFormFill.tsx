@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { useLang } from '../context/LanguageContext';
 import { useApp } from '../context/AppContext';
+import { submitApplication } from '../services/api';
 import { VedAvatar } from '../components/VedAvatar';
 import { Check, Download, Eye, ExternalLink, X, Mic } from 'lucide-react';
 
@@ -13,9 +14,12 @@ const generatingTexts = {
   en: ['Writing name...', 'Adding bank details...', 'Preparing form...'],
 };
 
+function maskAadhaar(v: string) { return v.length >= 4 ? 'XXXX-XXXX-' + v.slice(-4) : v || '—'; }
+function maskAccount(v: string) { return v.length >= 4 ? 'XXXX-XXXX-' + v.slice(-4) : v || '—'; }
+
 export function AgriFormFill() {
   const { lang } = useLang();
-  const { profile } = useApp();
+  const { profile, sessionId, activeSchemeId, addApplication } = useApp();
   const navigate = useNavigate();
   const [step, setStep] = useState<FormStep>('summary');
   const [visibleFields, setVisibleFields] = useState(0);
@@ -23,15 +27,20 @@ export function AgriFormFill() {
   const [showPortalModal, setShowPortalModal] = useState(false);
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [correctionField, setCorrectionField] = useState<string | null>(null);
+  const [correctedFields, setCorrectedFields] = useState<Record<string, string>>({});
+  const [pdfB64, setPdfB64] = useState<string | null>(null);
+  const [referenceNumber, setReferenceNumber] = useState<string>('');
+  const [portalUrl, setPortalUrl] = useState<string | null>(null);
 
   const fields = [
-    { key: 'name', label: lang === 'hi' ? 'पूरा नाम' : 'Full Name', value: 'Ramesh Kumar' },
-    { key: 'state', label: lang === 'hi' ? 'राज्य' : 'State', value: profile.state || 'Uttar Pradesh' },
-    { key: 'district', label: lang === 'hi' ? 'ज़िला' : 'District', value: 'Varanasi' },
-    { key: 'aadhaar', label: lang === 'hi' ? 'आधार' : 'Aadhaar', value: 'XXXX-XXXX-1234' },
-    { key: 'bank', label: lang === 'hi' ? 'बैंक खाता' : 'Bank Account', value: 'XXXX-XXXX-5678' },
-    { key: 'ifsc', label: 'IFSC', value: 'SBIN0001234' },
-    { key: 'mobile', label: lang === 'hi' ? 'मोबाइल' : 'Mobile', value: '+91 98765 43210' },
+    { key: 'name',         label: lang === 'hi' ? 'पूरा नाम'        : 'Full Name',       value: String(profile.name || '') },
+    { key: 'state',        label: lang === 'hi' ? 'राज्य'            : 'State',           value: String(profile.state || '') },
+    { key: 'district',    label: lang === 'hi' ? 'ज़िला'             : 'District',        value: String(profile.district || '') },
+    { key: 'aadhaar',     label: lang === 'hi' ? 'आधार'              : 'Aadhaar',         value: maskAadhaar(String(profile.aadhaar || '')) },
+    { key: 'bank_account',label: lang === 'hi' ? 'बैंक खाता'         : 'Bank Account',    value: maskAccount(String(profile.bank_account || '')) },
+    { key: 'bank_ifsc',   label: 'IFSC',                                                  value: String(profile.bank_ifsc || '') },
+    { key: 'mobile',      label: lang === 'hi' ? 'मोबाइल'            : 'Mobile',          value: String(profile.mobile || '') },
+    { key: 'family_member_count', label: lang === 'hi' ? 'परिवार के सदस्य' : 'Family Members', value: String(profile.family_member_count || '') },
   ];
 
   // Staggered field reveal in summary
@@ -49,10 +58,41 @@ export function AgriFormFill() {
       const interval = setInterval(() => {
         setGenTextIdx(i => (i + 1) % texts.length);
       }, 1200);
-      const done = setTimeout(() => setStep('success'), 4000);
-      return () => { clearInterval(interval); clearTimeout(done); };
+      return () => { clearInterval(interval); };
     }
   }, [step, lang]);
+
+  const handleConfirm = async () => {
+    setStep('generating');
+    try {
+      const formData: Record<string, unknown> = {};
+      fields.forEach(f => { formData[f.key] = profile[f.key] || f.value; });
+      Object.entries(correctedFields).forEach(([k, v]) => { formData[k] = v; });
+
+      const resp = await submitApplication({
+        session_id: sessionId,
+        scheme_id: activeSchemeId || '',
+        form_data: formData,
+        confirmed: true,
+      });
+
+      setPdfB64(resp.pdf_b64 || null);
+      setReferenceNumber(resp.reference_number);
+      setPortalUrl(resp.portal_url || null);
+      addApplication(resp.reference_number, resp);
+      setStep('success');
+    } catch {
+      setStep('confirm');
+    }
+  };
+
+  const handleDownload = () => {
+    if (!pdfB64) return;
+    const a = document.createElement('a');
+    a.href = `data:application/pdf;base64,${pdfB64}`;
+    a.download = `jan-saathi-form-${referenceNumber}.pdf`;
+    a.click();
+  };
 
   const texts = lang === 'hi' ? generatingTexts.hi : generatingTexts.en;
 
@@ -161,11 +201,11 @@ export function AgriFormFill() {
                         {f.label}
                       </span>
                       <input
-                        defaultValue={f.value}
+                        defaultValue={correctedFields[f.key] ?? f.value}
                         className="w-full bg-transparent outline-none mt-1"
                         style={{ fontSize: '14px', fontWeight: 600, fontFamily: 'Manrope, sans-serif' }}
                         onFocus={() => setCorrectionField(f.key)}
-                        onBlur={() => setCorrectionField(null)}
+                        onBlur={(e) => { setCorrectionField(null); setCorrectedFields(prev => ({ ...prev, [f.key]: e.target.value })); }}
                       />
                     </div>
                     <Mic className="w-5 h-5 text-muted-foreground hover:text-[#FF9933] cursor-pointer transition-colors" />
@@ -205,7 +245,7 @@ export function AgriFormFill() {
               </p>
 
               <button
-                onClick={() => setStep('generating')}
+                onClick={handleConfirm}
                 className="w-full max-w-sm py-4 rounded-xl text-white mb-3"
                 style={{
                   background: 'linear-gradient(90deg, #FF9933, #e8882d)',
@@ -285,6 +325,7 @@ export function AgriFormFill() {
 
               <div className="w-full max-w-sm space-y-3">
                 <button
+                  onClick={handleDownload}
                   className="w-full py-3.5 rounded-xl text-white flex items-center justify-center gap-2"
                   style={{ background: 'linear-gradient(90deg, #FF9933, #e8882d)', fontWeight: 600, fontSize: '15px' }}
                 >

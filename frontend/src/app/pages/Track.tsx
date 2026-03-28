@@ -1,29 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLang } from '../context/LanguageContext';
 import { useApp } from '../context/AppContext';
 import { Search, Check, Clock, AlertCircle, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import { VedAvatarSmall } from '../components/VedAvatar';
+import { trackApplication, getSessionApplications } from '../services/api';
 
 export function Track() {
   const { t, lang } = useLang();
-  const { applications } = useApp();
+  const { applications, sessionId } = useApp();
   const [refInput, setRefInput] = useState('');
   const [result, setResult] = useState<any>(null);
   const [searched, setSearched] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [sessionApps, setSessionApps] = useState<any[]>([]);
 
-  const handleTrack = () => {
+  useEffect(() => {
+    getSessionApplications(sessionId).then(apps => {
+      if (Array.isArray(apps)) setSessionApps(apps);
+    }).catch(() => {});
+  }, [sessionId]);
+
+  const handleTrack = async () => {
     setSearched(true);
-    if (applications[refInput]) {
-      setResult({ ref: refInput, ...applications[refInput] });
-    } else {
-      setResult({
-        ref: refInput || 'JAN-2026-00341',
-        schemeName: 'PM-KISAN Samman Nidhi',
-        status: 'state_verified',
-        date: '20 Mar 2026',
-        expected: '4 Apr 2026',
-      });
+    setLoading(true);
+    try {
+      const data = await trackApplication(refInput);
+      setResult(data);
+    } catch {
+      // Try local session apps or applications context as fallback
+      const found = sessionApps.find((a: any) => a.reference_number === refInput)
+        || (applications[refInput] ? { reference_number: refInput, ...applications[refInput] } : null);
+      setResult(found || null);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -84,10 +94,16 @@ export function Track() {
         </button>
       </div>
 
-      {searched && !result && (
+      {searched && !result && !loading && (
         <div className="text-center p-6 rounded-xl bg-white border border-border">
           <AlertCircle className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
           <p className="text-muted-foreground">{t('track.notfound')}</p>
+        </div>
+      )}
+
+      {searched && loading && (
+        <div className="text-center p-8">
+          <div className="w-8 h-8 border-4 border-[#FF9933] border-t-transparent rounded-full animate-spin mx-auto" />
         </div>
       )}
 
@@ -98,10 +114,10 @@ export function Track() {
           className="bg-white rounded-2xl border-2 border-border p-6 shadow-lg"
         >
           <h3 className="text-center mb-1 text-[#000080]" style={{ fontWeight: 700, fontSize: '1.1rem', fontFamily: 'Lora, serif' }}>
-            {result.schemeName}
+            {result.scheme_name || result.schemeName}
           </h3>
           <p className="text-center text-muted-foreground mb-8" style={{ fontSize: '0.85rem' }}>
-            Ref: {result.ref}
+            Ref: {result.reference_number || result.ref}
           </p>
 
           {/* 4-Node Application Journey Timeline */}
@@ -184,10 +200,10 @@ export function Track() {
 
           <div className="text-center space-y-1 text-muted-foreground" style={{ fontSize: '0.85rem' }}>
             <p>
-              {lang === 'hi' ? 'जमा:' : 'Submitted:'} {result.date}
+              {lang === 'hi' ? 'जमा:' : 'Submitted:'} {result.submitted_at || result.date || '—'}
             </p>
             <p>
-              {lang === 'hi' ? 'अपेक्षित:' : 'Expected:'} {result.expected}
+              {lang === 'hi' ? 'अपेक्षित:' : 'Expected:'} {result.expected_benefit_date || result.expected || '—'}
             </p>
           </div>
         </motion.div>

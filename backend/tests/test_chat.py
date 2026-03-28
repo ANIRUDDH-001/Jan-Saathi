@@ -1,58 +1,74 @@
-"""Tests for chat endpoint state machine."""
+"""test_chat.py — chat state machine unit tests."""
 import pytest
-from fastapi.testclient import TestClient
-from unittest.mock import patch
-from main import app
 
-client = TestClient(app)
 
-def test_health():
-    r = client.get("/health")
-    assert r.status_code == 200
-    assert r.json()["status"] == "ok"
+class TestIntakeState:
+    def test_intake_returns_question(self, client, mock_db, mock_llm, mock_embed, mock_sarvam, monkeypatch):
+        """When threshold not met, reply contains the follow-up question."""
+        # Override process_intake to NOT be threshold-ready
+        from app.services import groq_llm as llm
+        monkeypatch.setattr(llm, "process_intake", lambda *a, **k: {
+            "extracted": {"state": "uttar_pradesh"},
+            "threshold_ready": False,
+            "ready_to_match": False,
+            "next_question_hi": "Aapki umar kya hai?",
+            "next_question_in_language": "Aapki umar kya hai?",
+        })
+        r = client.post("/api/chat", json={
+            "message": "Main UP se hoon",
+            "session_id": "test-intake-001",
+            "language": "hi"
+        })
+        assert r.status_code == 200
+        d = r.json()
+        assert d["state"] == "intake"
+        assert len(d["reply"]) > 0
 
-def test_intake_extracts_profile():
-    # Will use the mocked process_intake returning all 3 field values 
-    r = client.post("/api/chat", json={
-        "message": "Main UP se hoon, kisan hoon, 45 saal",
-        "session_id": "test-001",
-        "language": "hi"
-    })
-    assert r.status_code == 200
-    data = r.json()
-    assert data["state"] in ["intake", "match"]
-    assert "reply" in data
-    assert data["profile"].get("state") == "uttar_pradesh" or data["state"] == "intake"
+    def test_intake_transitions_to_match_when_threshold_met(
+            self, client, mock_db, mock_llm, mock_embed, mock_sarvam):
+        """When all 3 threshold fields collected, state transitions to match."""
+        r = client.post("/api/chat", json={
+            "message": "Main UP se hoon, kisan hoon, 45 saal",
+            "session_id": "test-threshold-001",
+            "language": "hi"
+        })
+        assert r.status_code == 200
+        d = r.json()
+        assert d["state"] == "match"
+        assert d["gap_value"] == 6000
+        assert len(d["schemes"]) == 1
+        assert d["schemes"][0]["acronym"] == "PM-KISAN"
 
-def test_threshold_triggers_match():
-    """When state+subtype+age all collected, should transition to match."""
-    r = client.post("/api/chat", json={
-        "message": "Mera naam Ramesh hai. Main Uttar Pradesh ke Varanasi se hoon. Fasal ugata hoon. Umra 48 saal hai.",
-        "session_id": "test-threshold-001",
-        "language": "hi"
-    })
-    assert r.status_code == 200
-    data = r.json()
-    # Mock makes it ready to match
-    assert data["state"] in ["intake", "match"]
-    if data["state"] == "match":
-        assert data["gap_value"] > 0
-        assert len(data["schemes"]) > 0
+    def test_language_passed_through(self, client, mock_db, mock_llm, mock_embed, mock_sarvam):
+        """Language field in response matches the request language."""
+        r = client.post("/api/chat", json={
+            "message": "আমি UP থেকে কৃষক",
+            "session_id": "test-lang-001",
+            "language": "bn"
+        })
+        assert r.status_code == 200
+        assert r.json()["language"] == "bn"
 
-def test_goodbye_triggers_summary():
-    # Because of our custom goodbye_side_effect in conftest
-    r = client.post("/api/chat", json={
-        "message": "dhanyawaad, bas ab",
-        "session_id": "test-goodbye-001",
-        "language": "hi"
-    })
-    assert r.status_code == 200
-    data = r.json()
-    assert data["state"] == "goodbye"
-    assert len(data["reply"]) > 1
 
-def test_ip_detect():
-    r = client.post("/api/chat/ip-detect")
-    assert r.status_code == 200
-    data = r.json()
-    assert "detected" in data
+
+class TestGoodbye:
+    def test_goodbye_keyword_triggers_summary(
+            self, client, mock_db, mock_llm, mock_sarvam, mock_embed):
+        r = client.post("/api/chat", json={
+            "message": "dhanyawaad bas",
+            "session_id": "test-goodbye-001",
+            "language": "hi"
+        })
+        assert r.status_code == 200
+        d = r.json()
+        assert d["state"] == "goodbye"
+        assert len(d["reply"]) > 10
+
+    @pytest.mark.parametrize("msg", ["bye", "bas", "ok bye", "bye bye"])
+    def test_various_goodbye_triggers(self, client, mock_db, mock_llm, mock_sarvam, mock_embed, msg):
+        """All goodbye keywords should trigger goodbye state."""
+        r = client.post("/api/chat", json={
+            "message": msg, "session_id": f"test-bye-{msg[:3]}", "language": "hi"
+        })
+        assert r.status_code == 200
+        assert r.json()["state"] == "goodbye"

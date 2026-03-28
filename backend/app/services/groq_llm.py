@@ -21,6 +21,7 @@ PLAIN LANGUAGE (mandatory):
 - No: submission, verification, disbursement, beneficiary, documentation
 - Write as if explaining to your farmer grandfather
 """
+PLAIN = PLAIN_LANGUAGE_RULE
 
 SYSTEM_PROMPTS = {
     "intake": """You are Ved, a Hindi-first voice assistant helping rural Indian farmers 
@@ -148,7 +149,7 @@ Return JSON: {{"summary_spoken": "3 part summary: what found, what to do next, f
     raw = call_groq([{"role": "user", "content": prompt}])
     return json.loads(raw).get("summary_spoken", "")
 
-def classify_goodbye_intent(message: str) -> bool:
+def is_goodbye(message: str) -> bool:
     """Check if message is a goodbye/end intent."""
     GOODBYE_KEYWORDS = [
         "dhanyawaad", "shukriya", "theek hai bas", "bye", "alvida",
@@ -157,3 +158,6 @@ def classify_goodbye_intent(message: str) -> bool:
     ]
     msg_lower = message.lower()
     return any(kw in msg_lower for kw in GOODBYE_KEYWORDS)
+
+def classify_goodbye_intent(message: str) -> bool:
+    return is_goodbye(message)

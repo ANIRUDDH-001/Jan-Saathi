@@ -1,0 +1,66 @@
+"""test_groq_llm.py — unit tests for groq_llm service logic."""
+import pytest
+
+
+class TestIsGoodbye:
+    """Tests for the is_goodbye / classify_goodbye_intent function."""
+
+    @pytest.mark.parametrize("msg,expected", [
+        ("dhanyawaad", True),
+        ("bye", True),
+        ("bas karo", True),
+        ("ok bye", True),
+        ("theek hai bas", True),
+        ("shukriya", True),
+        ("धन्यवाद", True),
+        ("बस", True),
+        ("Main UP se hoon", False),
+        ("kisan PM-KISAN", False),
+        ("mujhe scheme chahiye", False),
+    ])
+    def test_goodbye_detection(self, msg, expected):
+        """is_goodbye correctly detects (or rejects) goodbye messages."""
+        from app.services.groq_llm import is_goodbye
+        assert is_goodbye(msg) == expected
+
+    def test_classify_goodbye_intent_alias(self):
+        """classify_goodbye_intent is an alias of is_goodbye."""
+        from app.services.groq_llm import is_goodbye, classify_goodbye_intent
+        assert is_goodbye("bye") == classify_goodbye_intent("bye")
+        assert is_goodbye("kisan") == classify_goodbye_intent("kisan")
+
+
+class TestModelChain:
+    def test_models_list_has_at_least_3(self):
+        """MODELS fallback chain has at least 3 entries."""
+        from app.services.groq_llm import MODELS
+        assert len(MODELS) >= 3
+
+    def test_plain_language_rule_defined(self):
+        """PLAIN_LANGUAGE_RULE and PLAIN alias are both defined and non-empty."""
+        from app.services.groq_llm import PLAIN_LANGUAGE_RULE, PLAIN
+        assert "15" in PLAIN_LANGUAGE_RULE       # Max 15 words rule
+        assert "words" in PLAIN_LANGUAGE_RULE.lower()
+        assert PLAIN == PLAIN_LANGUAGE_RULE       # Alias must match
+
+    def test_system_prompts_all_states_defined(self):
+        """SYSTEM_PROMPTS contains all 4 state keys."""
+        from app.services.groq_llm import SYSTEM_PROMPTS
+        for state in ("intake", "match", "guide", "form_fill"):
+            assert state in SYSTEM_PROMPTS, f"Missing prompt for state: {state}"
+            assert len(SYSTEM_PROMPTS[state]) > 50
+
+
+class TestPDFGenerator:
+    def test_generate_pdf_raises_if_template_missing(self):
+        """generate_pdf raises FileNotFoundError when template is absent."""
+        from app.services.pdf_generator import generate_pdf
+        with pytest.raises(FileNotFoundError):
+            generate_pdf("NONEXISTENT", {"name": "Test"})
+
+    def test_calculate_pmy_full_table(self):
+        """calculate_pmy_contribution matches the official government table at key ages."""
+        from app.services.pdf_generator import calculate_pmy_contribution
+        table = {18: 55, 19: 58, 25: 80, 29: 100, 30: 105, 35: 150, 40: 200}
+        for age, expected in table.items():
+            assert calculate_pmy_contribution(age) == expected, f"Failed at age {age}"

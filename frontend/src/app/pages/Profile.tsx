@@ -7,10 +7,18 @@ import { VedAvatarProfile } from '../components/VedAvatar';
 
 export function Profile() {
   const { t } = useLang();
-  const { isLoggedIn, user, profile, setProfile } = useApp();
+  const { isLoggedIn, user, profile, setProfile, logout } = useApp();
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(profile);
+  const [draft, setDraft] = useState<Record<string, unknown>>({
+    state:      profile.state      || '',
+    occupation: profile.occupation || '',
+    age:        profile.age        || '',
+    income:     profile.income     || '',
+    category:   profile.category   || '',
+    bpl:        profile.bpl        || '',
+    gender:     profile.gender     || '',
+  });
 
   if (!isLoggedIn) {
     navigate('/');
@@ -28,7 +36,10 @@ export function Profile() {
   ];
 
   const handleSave = () => { setProfile(draft); setEditing(false); };
-  const handleClear = () => { setProfile({ state: '', occupation: '', age: '', income: '', category: '', bpl: '', gender: '' }); setDraft({ state: '', occupation: '', age: '', income: '', category: '', bpl: '', gender: '' }); };
+  const handleClear = () => {
+    const empty = { state: '', occupation: '', age: '', income: '', category: '', bpl: '', gender: '' };
+    setProfile(empty); setDraft(empty);
+  };
 
   const mockSavedSchemes = [
     { name: 'PM-KISAN Samman Nidhi', slug: 'pm-kisan' },
@@ -62,13 +73,13 @@ export function Profile() {
               <span className="text-muted-foreground" style={{ fontSize: '0.85rem' }}>{f.label}</span>
               {editing ? (
                 <input
-                  value={draft[f.key]}
+                  value={String(draft[f.key] ?? '')}
                   onChange={e => setDraft({ ...draft, [f.key]: e.target.value })}
                   className="px-3 py-1 rounded border border-border w-40 text-right"
                   style={{ fontSize: '0.85rem' }}
                 />
               ) : (
-                <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>{profile[f.key] || '—'}</span>
+                <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>{String(profile[f.key] || '') || '—'}</span>
               )}
             </div>
           ))}

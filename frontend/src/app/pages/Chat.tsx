@@ -15,10 +15,22 @@ import { LanguageDetectionBanner } from '../components/LanguageDetectionBanner';
 import { GoodbyeSummary } from '../components/GoodbyeSummary';
 import { VedAvatarSmall } from '../components/VedAvatar';
 import { motion, AnimatePresence } from 'motion/react';
+import { sendChatMessage, transcribeAudio } from '../services/api';
+
+async function playAudioB64(b64: string): Promise<void> {
+  const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  const buffer = await ctx.decodeAudioData(bytes.buffer);
+  const src = ctx.createBufferSource();
+  src.buffer = buffer; src.connect(ctx.destination);
+  return new Promise(resolve => { src.onended = () => resolve(); src.start(); });
+}
 
 export function Chat() {
   const { lang, t } = useLang();
-  const { profile, setProfile, chatState, setChatState, messages, addMessage, setSchemes, setGapValue, gapValue, isLoggedIn } = useApp();
+  const { profile, mergeProfile, chatState, setChatState, messages, addMessage, setSchemes, setGapValue, gapValue, isLoggedIn, sessionId, currentLanguage, setLanguage, setVoicePlaying, updateLastInputTime, lastInputTime, setActiveScheme, schemes } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -30,8 +42,11 @@ export function Chat() {
   const [showOccupationCards, setShowOccupationCards] = useState(false);
   const [showLangBanner, setShowLangBanner] = useState(false);
   const [showGoodbye, setShowGoodbye] = useState(false);
-  const [silenceTimer, setSilenceTimer] = useState(0);
-  const silenceRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [silenceProgress, setSilenceProgress] = useState(0);
+  const [showSilenceBar, setShowSilenceBar] = useState(false);
+  const [detectedLang, setDetectedLang] = useState<string | null>(null);
+  const [silenceWarningFired, setSilenceWarningFired] = useState(false);
+  const mediaRef = useRef<MediaRecorder | null>(null);
 
   // Progress bar step
   const progressStep = chatState === 'intake' ? 0 : chatState === 'match' ? 1 : 2;
@@ -54,112 +69,147 @@ export function Chat() {
 
   // Silence timer
   useEffect(() => {
-    const resetSilence = () => setSilenceTimer(0);
-    
-    if (silenceRef.current) clearInterval(silenceRef.current);
-    silenceRef.current = setInterval(() => {
-      setSilenceTimer(prev => {
-        if (prev >= 30) {
-          setShowGoodbye(true);
-          if (silenceRef.current) clearInterval(silenceRef.current);
-          return 0;
-        }
-        return prev + 1;
-      });
-    }, 1000);
+    if (messages.length === 0) return;
+    const THRESHOLD = 30000;
+    const timer = setInterval(() => {
+      const elapsed = Date.now() - lastInputTime;
+      if (elapsed > 20000 && chatState !== 'goodbye') {
+        setShowSilenceBar(true);
+        setSilenceProgress(Math.min(1, (elapsed - 20000) / 10000));
+      } else {
+        setShowSilenceBar(false);
+      }
+      if (elapsed > THRESHOLD && chatState !== 'goodbye' && !silenceWarningFired) {
+        setSilenceWarningFired(true);
+        setShowGoodbye(true);
+        handleSend('bas');  // Trigger goodbye
+      }
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [lastInputTime, chatState, messages.length, silenceWarningFired]);
 
-    return () => { if (silenceRef.current) clearInterval(silenceRef.current); };
-  }, [messages.length]);
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const rec = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      const chunks: Blob[] = [];
+      rec.ondataavailable = e => chunks.push(e.data);
+      rec.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        await processVoice(blob);
+      };
+      rec.start();
+      mediaRef.current = rec;
+      setVoiceState('listening');
+      updateLastInputTime();
+    } catch {
+      setVoiceState('default');
+    }
+  };
 
-  const handleSend = (text?: string) => {
+  const stopRecording = () => {
+    mediaRef.current?.stop();
+    setVoiceState('processing');
+  };
+
+  const handleVoice = () => {
+    if (voiceState === 'listening') { stopRecording(); return; }
+    startRecording();
+  };
+
+  const processVoice = async (blob: Blob) => {
+    try {
+      const { transcript, language_short } = await transcribeAudio(
+        blob, sessionId, (currentLanguage === 'hi' ? 'hi-IN' : currentLanguage + '-IN')
+      );
+      if (language_short !== currentLanguage) {
+        setLanguage(language_short);
+        setDetectedLang(language_short);
+        setTimeout(() => setDetectedLang(null), 3000);
+      }
+      updateLastInputTime();
+      await handleSend(transcript);
+    } catch {
+      setVoiceState('default');
+    }
+  };
+
+  const handleSend = async (text?: string) => {
     const msg = text || input;
     if (!msg.trim()) return;
     setInput('');
-    setSilenceTimer(0);
     addMessage({ id: v4Fallback(), role: 'user', text: msg });
     setTyping(true);
+    updateLastInputTime();
+    setSilenceWarningFired(false);
 
     // Show language detection banner on first user message
     if (messages.filter(m => m.role === 'user').length === 0) {
       setTimeout(() => setShowLangBanner(true), 500);
     }
 
-    setTimeout(() => {
-      const match = botResponses.find(r => msg.toLowerCase().includes(r.trigger)) || botResponses[2];
-      const reply = lang === 'hi' ? match.hi : match.en;
+    try {
+      const resp = await sendChatMessage(msg, sessionId, currentLanguage);
+      
+      // Update app state from response
+      setChatState(resp.state);
+      mergeProfile(resp.profile);
+      if (resp.schemes?.length) setSchemes(resp.schemes);
+      if (resp.gap_value) setGapValue(resp.gap_value);
 
-      setProfile({
-        state: match.profile.state,
-        occupation: match.profile.occupation,
-        age: match.profile.age,
-        income: match.profile.income,
-        category: match.profile.category,
-        bpl: match.profile.bpl,
-        gender: match.profile.gender,
-      });
-      setSchemes(mockSchemes);
-      const total = mockSchemes.reduce((s, sc) => s + sc.benefit, 0);
-      setGapValue(total);
-      setChatState('match');
-      setShowSavePrompt(!isLoggedIn);
+      addMessage({ id: v4Fallback(), role: 'bot', text: resp.reply, audioB64: resp.audio_b64 });
 
-      addMessage({ id: v4Fallback(), role: 'bot', text: reply });
-      setTyping(false);
+      // Show save prompt when moving to match state (approximate, since we don't have exact old/new state comparison here)
+      if (resp.state === 'match' && chatState !== 'match') {
+         setShowSavePrompt(!isLoggedIn);
+      }
 
       // Show occupation cards after matching for farmer queries
-      if (msg.toLowerCase().includes('farmer') || msg.toLowerCase().includes('किसान')) {
+      if (resp.state === 'intake' && (msg.toLowerCase().includes('farmer') || msg.toLowerCase().includes('किसान'))) {
         setTimeout(() => {
-          addMessage({
-            id: v4Fallback(),
-            role: 'bot',
-            text: lang === 'hi' ? 'आप क्या उगाते हैं?' : 'What do you grow?',
-          });
           setShowOccupationCards(true);
         }, 1000);
       }
-    }, 2000);
+
+      // Play TTS
+      if (resp.audio_b64) {
+        setVoicePlaying(true);
+        await playAudioB64(resp.audio_b64);
+        setVoicePlaying(false);
+      }
+
+      // Goodbye state — save session summary
+      if (resp.state === 'goodbye') {
+        localStorage.setItem('js_last_session', JSON.stringify({
+          action: resp.reply.slice(0, 80),
+          timestamp: Date.now(),
+        }));
+      }
+    } catch (err) {
+      addMessage({ id: v4Fallback(), role: 'bot', text: 'Kuch gadbad ho gayi. Thodi der mein phir try karein.' });
+    } finally {
+      setTyping(false);
+      setVoiceState('default');
+    }
   };
 
   const handleOccupationSelect = (value: string) => {
     setShowOccupationCards(false);
-    addMessage({ id: v4Fallback(), role: 'user', text: value });
-    setTyping(true);
-    setTimeout(() => {
-      addMessage({
-        id: v4Fallback(),
-        role: 'bot',
-        text: lang === 'hi'
-          ? `बहुत अच्छा! ${value} के लिए भी विशेष योजनाएं हैं। क्या आप form भरना चाहते हैं?`
-          : `Great! There are special schemes for ${value} too. Would you like to fill the form?`,
-      });
-      setTyping(false);
-      setChatState('guide');
-    }, 1500);
-  };
-
-  const handleVoice = () => {
-    setVoiceState('listening');
-    setSilenceTimer(0);
-    setTimeout(() => {
-      setVoiceState('processing');
-      setTimeout(() => {
-        setVoiceState('default');
-        handleSend(t('example.1'));
-      }, 1000);
-    }, 1500);
+    handleSend(value);
   };
 
   const profileFields = [
-    { key: 'state', label: t('profile.state'), value: profile.state },
-    { key: 'occupation', label: t('profile.occupation'), value: profile.occupation },
-    { key: 'age', label: t('profile.age'), value: profile.age },
-    { key: 'income', label: t('profile.income'), value: profile.income },
-    { key: 'category', label: t('profile.category'), value: profile.category },
-    { key: 'bpl', label: t('profile.bpl'), value: profile.bpl },
-    { key: 'gender', label: t('profile.gender'), value: profile.gender },
+    { key: 'state', label: t('profile.state'), value: String(profile.state || '') },
+    { key: 'occupation', label: t('profile.occupation'), value: String(profile.occupation || '') },
+    { key: 'age', label: t('profile.age'), value: String(profile.age || '') },
+    { key: 'income', label: t('profile.income'), value: String(profile.income || '') },
+    { key: 'category', label: t('profile.category'), value: String(profile.category || '') },
+    { key: 'bpl', label: t('profile.bpl'), value: String(profile.bpl || '') },
+    { key: 'gender', label: t('profile.gender'), value: String(profile.gender || '') },
   ];
 
-  const showSilenceBar = silenceTimer >= 20 && silenceTimer < 30;
+  // Render logic remains similar
 
   return (
     <div className="max-w-7xl mx-auto flex h-[calc(100vh-5rem)] relative">
@@ -282,7 +332,10 @@ export function Chat() {
               className="mx-4 mb-2"
             >
               <button
-                onClick={() => navigate('/form-fill')}
+                onClick={() => {
+                   setActiveScheme(schemes[0]?.scheme_id || null);
+                   navigate('/form-fill');
+                }}
                 className="w-full py-3 rounded-xl text-white flex items-center justify-center gap-2"
                 style={{
                   background: 'linear-gradient(90deg, #FF9933, #e8882d)',
@@ -302,13 +355,13 @@ export function Chat() {
           {showSilenceBar && (
             <div className="absolute -top-6 left-0 right-0 px-4">
               <p className="text-center text-muted-foreground mb-1" style={{ fontSize: '11px', fontFamily: 'Manrope, sans-serif' }}>
-                {lang === 'hi' ? `${30 - silenceTimer} सेकेंड में सारांश देंगे...` : `Summary in ${30 - silenceTimer}s...`}
+                {lang === 'hi' ? `${Math.floor(10 * (1 - silenceProgress))} सेकेंड में सारांश देंगे...` : `Summary in ${Math.floor(10 * (1 - silenceProgress))}s...`}
               </p>
               <div className="h-1 bg-muted rounded-full overflow-hidden">
                 <motion.div
                   className="h-full bg-[#FF9933] rounded-full"
                   initial={{ width: '100%' }}
-                  animate={{ width: `${((30 - silenceTimer) / 10) * 100}%` }}
+                  animate={{ width: `${(1 - silenceProgress) * 100}%` }}
                   transition={{ duration: 1, ease: 'linear' }}
                 />
               </div>

@@ -64,6 +64,16 @@ def match_schemes(
     r = get_db().rpc("match_schemes", params).execute()
     return r.data or []
 
+def get_scheme_by_slug(slug: str) -> Optional[dict]:
+    """Get scheme by its scheme_id (slug)."""
+    r = get_db().table("schemes").select("*").eq("scheme_id", slug).execute()
+    return r.data[0] if r.data else None
+
+def get_scheme_by_db_id(id: str) -> Optional[dict]:
+    """Get scheme by its UUID primary key (if applicable) or slug."""
+    # Assuming the app uses scheme_id as the primary lookup globally
+    return get_scheme_by_slug(id)
+
 # ── Applications ─────────────────────────────────────────────────────────────
 
 def create_application(
@@ -98,6 +108,11 @@ def create_application(
 
 def get_application(reference_number: str) -> Optional[dict]:
     r = get_db().table("applications").select("*").eq("reference_number", reference_number).execute()
+    return r.data[0] if r.data else None
+
+def get_application_detail(reference_number: str) -> Optional[dict]:
+    """Get full application detail including status history."""
+    r = get_db().table("applications").select("*, application_status_history(*)").eq("reference_number", reference_number).execute()
     return r.data[0] if r.data else None
 
 def get_session_applications(session_id: str) -> List[dict]:
