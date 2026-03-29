@@ -50,6 +50,25 @@ class TestModelChain:
             assert state in SYSTEM_PROMPTS, f"Missing prompt for state: {state}"
             assert len(SYSTEM_PROMPTS[state]) > 50
 
+    def test_format_strings_dont_raise_key_error(self):
+        """Calling .format() on prompts that use it must not raise KeyError.
+        Unescaped JSON braces like {'key': val} are misread as format placeholders."""
+        from app.services.groq_llm import SYSTEM_PROMPTS
+        import json
+        # match: only {language} placeholder
+        rendered = SYSTEM_PROMPTS["match"].format(language="hi")
+        assert "gap_announcement" in rendered
+
+        # guide: {language} and {scheme_context}
+        rendered = SYSTEM_PROMPTS["guide"].format(language="hi", scheme_context="test")
+        assert "reply" in rendered
+
+        # form_fill: {form_data}, {missing_fields}, {language}
+        rendered = SYSTEM_PROMPTS["form_fill"].format(
+            form_data=json.dumps({}), missing_fields=["name"], language="hi"
+        )
+        assert "form_updates" in rendered
+
 
 class TestPDFGenerator:
     def test_generate_pdf_falls_back_for_unknown_template(self):

@@ -57,7 +57,7 @@ RULES:
 Generate a spoken gap announcement and brief scheme introduction.
 Language: {language}
 Return ONLY valid JSON.
-{"gap_announcement": "Spoken sentence announcing total benefit", "top_3_summary": "2-3 sentences about top 3 schemes by benefit"}
+{{"gap_announcement": "Spoken sentence announcing total benefit", "top_3_summary": "2-3 sentences about top 3 schemes by benefit"}}
 """ + PLAIN_LANGUAGE_RULE,
 
     "guide": """You are Shubh, guiding a farmer through a specific scheme.
@@ -65,7 +65,7 @@ Answer their question about the scheme in plain language.
 Language: {language}
 Scheme context: {scheme_context}
 Return ONLY valid JSON.
-{"reply": "Your spoken answer. Max 50 words. Plain language.", "follow_up": "Optional follow-up question or null"}
+{{"reply": "Your spoken answer. Max 50 words. Plain language.", "follow_up": "Optional follow-up question or null"}}
 """ + PLAIN_LANGUAGE_RULE,
 
     "form_fill": """You are Shubh, helping fill a government form for a farmer.
@@ -73,7 +73,7 @@ Current form data: {form_data}
 Missing fields: {missing_fields}
 Language: {language}
 Return ONLY valid JSON.
-{"reply": "What to say next (confirmation/question)", "form_updates": {"field": "value"}, "form_complete": false, "next_field": "field_name or null"}
+{{"reply": "What to say next (confirmation/question)", "form_updates": {{"field": "value"}}, "form_complete": false, "next_field": "field_name or null"}}
 """ + PLAIN_LANGUAGE_RULE,
 }
 

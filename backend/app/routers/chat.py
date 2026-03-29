@@ -491,11 +491,18 @@ async def chat(req: ChatRequest, request: Request):
                 )
 
                 if matched:
-                    gap_result = await llm.generate_gap_announcement(matched, profile, language)
-                    reply = (
-                        gap_result.get("gap_announcement", "") + " " +
-                        gap_result.get("top_3_summary", "")
-                    ).strip()
+                    try:
+                        gap_result = await llm.generate_gap_announcement(matched, profile, language)
+                        reply = (
+                            gap_result.get("gap_announcement", "") + " " +
+                            gap_result.get("top_3_summary", "")
+                        ).strip()
+                    except Exception as e:
+                        logger.error(f"gap_announcement failed: {e}")
+                        top3 = sorted(matched, key=lambda x: x.get("benefit_annual_inr", 0), reverse=True)[:3]
+                        names = ", ".join(s.get("acronym") or s.get("name_english", "") for s in top3)
+                        total = sum(s.get("benefit_annual_inr", 0) for s in matched if s.get("has_monetary_benefit"))
+                        reply = f"Aapke liye {len(matched)} yojanayen mili hain. Top schemes: {names}. Kul labh: ₹{total:,}."
                     new_state = "match"
                 else:
                     # Don't say "no schemes" yet if more fields remain to collect
