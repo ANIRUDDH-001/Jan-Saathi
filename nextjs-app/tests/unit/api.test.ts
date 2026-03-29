@@ -12,6 +12,7 @@ Object.defineProperty(globalThis, 'window', {
 
 describe('API utilities', () => {
   beforeEach(() => {
+    vi.resetModules();
     mockFetch.mockReset();
   });
 
