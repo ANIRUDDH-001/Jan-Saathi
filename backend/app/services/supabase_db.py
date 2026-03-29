@@ -1,5 +1,4 @@
 """All Supabase database operations."""
-import os
 from datetime import datetime, timedelta
 from typing import Optional, List
 from supabase import create_client, Client
@@ -55,12 +54,17 @@ def match_schemes(
         "match_threshold": match_threshold,
         "match_count": match_count,
     }
-    if filter_state:      params["filter_state"] = filter_state
-    if filter_occupation: params["filter_occupation"] = filter_occupation
-    if filter_income:     params["filter_income"] = filter_income
-    if filter_bpl is not None: params["filter_bpl"] = filter_bpl
-    if filter_age:        params["filter_age"] = filter_age
-    
+    if filter_state:
+        params["filter_state"] = filter_state
+    if filter_occupation:
+        params["filter_occupation"] = filter_occupation
+    if filter_income:
+        params["filter_income"] = filter_income
+    if filter_bpl is not None:
+        params["filter_bpl"] = filter_bpl
+    if filter_age:
+        params["filter_age"] = filter_age
+
     r = get_db().rpc("match_schemes", params).execute()
     return r.data or []
 
@@ -74,16 +78,30 @@ def match_schemes_fallback(
     Returns schemes filtered by state/occupation only.
     """
     db = get_db()
-    query = db.table("schemes").select("*")
-    # Try state filter if column exists; if not, the query still returns results
-    try:
-        if filter_state:
-            # schemes table may store state as array or string — try contains first
-            query = query.contains("target_states", [filter_state])
-        return query.order("benefit_annual_inr", desc=True).limit(match_count).execute().data or []
-    except Exception:
-        # If target_states column/filter fails, just return top schemes unfiltered
-        return db.table("schemes").select("*").limit(match_count).execute().data or []
+    query = db.table("schemes").select(
+        "scheme_id, name_english, name_hindi, level, target_states, benefit_annual_inr, "
+        "has_monetary_benefit, eligibility_summary, spoken_content, demo_ready"
+    ).eq("demo_ready", True)
+
+    if filter_state:
+        # Include state-specific schemes AND central/national schemes
+        query = query.or_(
+            f'target_states.cs.{{"{filter_state}"}},target_states.cs.{{"central"}}'
+        )
+
+    if filter_occupation:
+        query = query.contains("target_occupation", [filter_occupation])
+
+    r = query.order("benefit_annual_inr", desc=True).limit(match_count).execute()
+    return r.data or []
+
+
+def get_schemes_by_ids(scheme_ids: list) -> List[dict]:
+    """Fetch schemes by their scheme_id slugs. Used to avoid re-running vector search."""
+    if not scheme_ids:
+        return []
+    r = get_db().table("schemes").select("*").in_("scheme_id", scheme_ids).execute()
+    return r.data or []
 
 
 def get_scheme_by_slug(slug: str) -> Optional[dict]:
@@ -183,7 +201,7 @@ def get_all_users(limit: int = 50) -> List[dict]:
 async def health_check() -> dict:
     """Verify Supabase is reachable."""
     try:
-        r = get_db().table("schemes").select("scheme_id").limit(1).execute()
+        get_db().table("schemes").select("scheme_id").limit(1).execute()
         return {"status": "ok", "connected": True}
     except Exception as e:
         return {"status": "error", "error": str(e)}

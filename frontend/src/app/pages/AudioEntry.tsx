@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronUp } from 'lucide-react';
-import { ShubhAvatar } from '../components/ShubhAvatar';
+import { ChevronUp, Mic } from 'lucide-react';
+import { VedAvatar } from '../components/VedAvatar';
 import { VoiceWaveform } from '../components/VoiceWaveform';
 import { synthesizeSpeech, detectLocation } from '../services/api';
 import { useApp } from '../context/AppContext';
 import { useLang } from '../context/LanguageContext';
 
 const GREETING_TEXT =
-  "Namaste! Main Shubh hoon, Jan Saathi. Aapki madad karne ke liye hoon. Aap kisan hain, majdoor hain, ya kuch aur? Bataaiye — apni baat.";
+  "Namaste! Main Ved hoon, Jan Saathi ka saathi. Aapki madad karne ke liye hoon. Bataiye — kya janana chahte hain?";
 
 export function AudioEntry() {
   const navigate = useNavigate();
@@ -20,6 +20,7 @@ export function AudioEntry() {
   const [showScreenPrompt, setShowScreenPrompt] = useState(false);
   const [hasSession, setHasSession] = useState(false);
   const [lastAction, setLastAction] = useState<string | null>(null);
+  const [showTapToSpeak, setShowTapToSpeak] = useState(false);
 
   const analyserRef = useRef<AnalyserNode | null>(null);
   const mediaRef = useRef<MediaRecorder | null>(null);
@@ -66,9 +67,7 @@ export function AudioEntry() {
 
       setIsTalking(false);
       setShowScreenPrompt(true);
-
-      // Auto-start listening after greeting
-      setTimeout(() => startListening(), 300);
+      setShowTapToSpeak(true);
     };
 
     const t = setTimeout(init, 500);
@@ -161,7 +160,7 @@ export function AudioEntry() {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.6, ease: 'backOut' }}
         >
-          <ShubhAvatar
+          <VedAvatar
             size={200}
             isTalking={isTalking}
             isListening={isListening && !isTalking}
@@ -219,9 +218,26 @@ export function AudioEntry() {
             className="text-white/60 text-sm"
             style={{ fontFamily: 'Manrope, sans-serif' }}
           >
-            Shubh bol raha hai...
+            Ved bol raha hai...
           </motion.p>
         )}
+
+        {/* Tap to Speak button — shown after greeting finishes */}
+        <AnimatePresence>
+          {showTapToSpeak && !isListening && (
+            <motion.button
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              onClick={() => { setShowTapToSpeak(false); startListening(); }}
+              className="w-24 h-24 rounded-full flex items-center justify-center shadow-xl"
+              style={{ backgroundColor: '#FF9933' }}
+            >
+              <Mic className="w-10 h-10 text-white" />
+            </motion.button>
+          )}
+        </AnimatePresence>
 
         {/* Voice waveform + controls while listening */}
         <AnimatePresence>

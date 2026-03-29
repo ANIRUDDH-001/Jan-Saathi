@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useLang } from '../context/LanguageContext';
 import { useApp } from '../context/AppContext';
 import { submitApplication } from '../services/api';
-import { ShubhAvatar } from '../components/ShubhAvatar';
+import { VedAvatar } from '../components/VedAvatar';
 import { Check, Download, Eye, ExternalLink, X, Mic } from 'lucide-react';
 
 type FormStep = 'summary' | 'correction' | 'confirm' | 'generating' | 'success';
@@ -32,16 +32,37 @@ export function AgriFormFill() {
   const [referenceNumber, setReferenceNumber] = useState<string>('');
   const [portalUrl, setPortalUrl] = useState<string | null>(null);
 
-  const fields = [
-    { key: 'name',         label: lang === 'hi' ? 'पूरा नाम'        : 'Full Name',       value: String(profile.name || '') },
-    { key: 'state',        label: lang === 'hi' ? 'राज्य'            : 'State',           value: String(profile.state || '') },
-    { key: 'district',    label: lang === 'hi' ? 'ज़िला'             : 'District',        value: String(profile.district || '') },
-    { key: 'aadhaar',     label: lang === 'hi' ? 'आधार'              : 'Aadhaar',         value: maskAadhaar(String(profile.aadhaar || '')) },
-    { key: 'bank_account',label: lang === 'hi' ? 'बैंक खाता'         : 'Bank Account',    value: maskAccount(String(profile.bank_account || '')) },
-    { key: 'bank_ifsc',   label: 'IFSC',                                                  value: String(profile.bank_ifsc || '') },
-    { key: 'mobile',      label: lang === 'hi' ? 'मोबाइल'            : 'Mobile',          value: String(profile.mobile || '') },
-    { key: 'family_member_count', label: lang === 'hi' ? 'परिवार के सदस्य' : 'Family Members', value: String(profile.family_member_count || '') },
+  const PM_KISAN_FIELDS = [
+    { key: 'name',               label: lang === 'hi' ? 'पूरा नाम'        : 'Full Name',       value: String(profile.name || '') },
+    { key: 'state',              label: lang === 'hi' ? 'राज्य'            : 'State',           value: String(profile.state || '') },
+    { key: 'district',           label: lang === 'hi' ? 'ज़िला'             : 'District',        value: String(profile.district || '') },
+    { key: 'aadhaar',            label: lang === 'hi' ? 'आधार'              : 'Aadhaar',         value: maskAadhaar(String(profile.aadhaar || '')) },
+    { key: 'bank_account',       label: lang === 'hi' ? 'बैंक खाता'         : 'Bank Account',    value: maskAccount(String(profile.bank_account || '')) },
+    { key: 'bank_ifsc',          label: 'IFSC',                                                  value: String(profile.bank_ifsc || '') },
+    { key: 'mobile',             label: lang === 'hi' ? 'मोबाइल'            : 'Mobile',          value: String(profile.mobile || '') },
+    { key: 'family_member_count',label: lang === 'hi' ? 'परिवार के सदस्य' : 'Family Members',   value: String(profile.family_member_count || '') },
   ];
+
+  const PM_KMY_FIELDS = [
+    { key: 'name',             label: lang === 'hi' ? 'पूरा नाम'           : 'Full Name',         value: String(profile.name || '') },
+    { key: 'dob',              label: lang === 'hi' ? 'जन्म तिथि'          : 'Date of Birth',     value: String(profile.dob || '') },
+    { key: 'gender',           label: lang === 'hi' ? 'लिंग'               : 'Gender',            value: String(profile.gender || '') },
+    { key: 'mobile',           label: lang === 'hi' ? 'मोबाइल'             : 'Mobile',            value: String(profile.mobile || '') },
+    { key: 'aadhaar',          label: lang === 'hi' ? 'आधार'               : 'Aadhaar',           value: maskAadhaar(String(profile.aadhaar || '')) },
+    { key: 'bank_account',     label: lang === 'hi' ? 'बैंक खाता'          : 'Bank Account',      value: maskAccount(String(profile.bank_account || '')) },
+    { key: 'bank_ifsc',        label: 'IFSC',                                                      value: String(profile.bank_ifsc || '') },
+    { key: 'bank_name',        label: lang === 'hi' ? 'बैंक का नाम'        : 'Bank Name',         value: String(profile.bank_name || '') },
+    { key: 'nominee_name',     label: lang === 'hi' ? 'नॉमिनी का नाम'     : 'Nominee Name',      value: String(profile.nominee_name || '') },
+    { key: 'nominee_relation', label: lang === 'hi' ? 'नॉमिनी का संबंध'   : 'Nominee Relation',  value: String(profile.nominee_relation || '') },
+    { key: 'nominee_dob',      label: lang === 'hi' ? 'नॉमिनी की जन्म तिथि' : 'Nominee DOB',    value: String(profile.nominee_dob || '') },
+    { key: 'occupation',       label: lang === 'hi' ? 'व्यवसाय'            : 'Occupation',        value: String(profile.occupation || '') },
+    { key: 'monthly_income',   label: lang === 'hi' ? 'मासिक आय'          : 'Monthly Income',    value: String(profile.monthly_income || '') },
+    { key: 'address',          label: lang === 'hi' ? 'पता'                : 'Address',           value: String(profile.address || '') },
+    { key: 'state',            label: lang === 'hi' ? 'राज्य'              : 'State',             value: String(profile.state || '') },
+    { key: 'pincode',          label: lang === 'hi' ? 'पिनकोड'             : 'Pincode',           value: String(profile.pincode || '') },
+  ];
+
+  const fields = activeSchemeId === 'pm-kmy' ? PM_KMY_FIELDS : PM_KISAN_FIELDS;
 
   // Staggered field reveal in summary
   useEffect(() => {
@@ -101,7 +122,7 @@ export function AgriFormFill() {
       {/* Left: Chat panel area */}
       <div className="hidden md:flex flex-1 items-center justify-center bg-gradient-to-br from-background to-white border-r border-border">
         <div className="text-center px-8">
-          <ShubhAvatar size={100} speaking={step === 'summary' || step === 'generating'} />
+          <VedAvatar size={100} speaking={step === 'summary' || step === 'generating'} />
           <p className="text-[#000080] mt-4" style={{ fontFamily: 'Lora, serif', fontSize: '18px', fontWeight: 600 }}>
             {step === 'summary' && (lang === 'hi' ? 'शुभ आपकी जानकारी पढ़ रहा है...' : 'Shubh is reading your details...')}
             {step === 'correction' && (lang === 'hi' ? 'बदलाव करें...' : 'Make corrections...')}
@@ -275,7 +296,7 @@ export function AgriFormFill() {
               exit={{ opacity: 0 }}
               className="flex flex-col items-center justify-center min-h-[60vh]"
             >
-              <ShubhAvatar size={120} speaking />
+              <VedAvatar size={120} speaking />
 
               {/* Pencil animation */}
               <div className="mt-6 w-48 h-1 bg-muted rounded-full overflow-hidden">

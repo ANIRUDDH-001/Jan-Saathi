@@ -3,14 +3,11 @@
 Intake uses a deterministic question queue (no LLM for question selection).
 Age/income extracted via regex first, LLM used only for state/category.
 """
-import json
 import re
 import logging
 import httpx
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Request
-
-logger = logging.getLogger(__name__)
 from app.models import ChatRequest, ChatResponse
 from app.services import supabase_db as db
 from app.services import groq_llm as llm
@@ -18,6 +15,8 @@ from app.services import cohere_embed as embed
 from app.services import sarvam
 from app.config import get_settings
 from app.limiter import limiter
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -58,6 +57,70 @@ INTAKE_QUESTIONS = {
         "bpl":      "ଆପଣଙ୍କ ପାଖରେ BPL କାର୍ଡ ଅଛି କି?",
         "gender":   "ଆପଣ ପୁରୁଷ ନା ମହିଳା?",
     },
+    "bn": {
+        "state":    "আপনি কোন রাজ্য থেকে এসেছেন?",
+        "age":      "আপনার বয়স কত?",
+        "income":   "আপনার বার্ষিক আয় কত? (টাকায় বলুন)",
+        "category": "আপনি SC, ST, OBC না General?",
+        "bpl":      "আপনার কাছে BPL কার্ড আছে?",
+        "gender":   "আপনি পুরুষ না মহিলা?",
+    },
+    "ta": {
+        "state":    "நீங்கள் எந்த மாநிலத்திலிருந்து வருகிறீர்கள்?",
+        "age":      "உங்கள் வயது என்ன?",
+        "income":   "உங்கள் ஆண்டு வருமானம் எவ்வளவு?",
+        "category": "நீங்கள் SC, ST, OBC அல்லது General?",
+        "bpl":      "உங்களிடம் BPL அட்டை உள்ளதா?",
+        "gender":   "நீங்கள் ஆண் அல்லது பெண்?",
+    },
+    "te": {
+        "state":    "మీరు ఏ రాష్ట్రం నుండి వచ్చారు?",
+        "age":      "మీ వయస్సు ఎంత?",
+        "income":   "మీ వార్షిక ఆదాయం ఎంత? (రూపాయలలో చెప్పండి)",
+        "category": "మీరు SC, ST, OBC లేదా General?",
+        "bpl":      "మీ దగ్గర BPL కార్డ్ ఉందా?",
+        "gender":   "మీరు పురుషుడా లేదా స్త్రీయా?",
+    },
+    "gu": {
+        "state":    "તમે ક્યા રાજ્યમાંથી છો?",
+        "age":      "તમારી ઉંમર કેટલી છે?",
+        "income":   "તમારી વાર્ષિક આવક કેટલી છે? (રૂપિયામાં)",
+        "category": "તમે SC, ST, OBC કે General?",
+        "bpl":      "તમારી પાસે BPL કાર્ડ છે?",
+        "gender":   "તમે પુરુષ છો કે સ્ત્રી?",
+    },
+    "kn": {
+        "state":    "ನೀವು ಯಾವ ರಾಜ್ಯದಿಂದ ಬಂದಿದ್ದೀರಿ?",
+        "age":      "ನಿಮ್ಮ ವಯಸ್ಸು ಎಷ್ಟು?",
+        "income":   "ನಿಮ್ಮ ವಾರ್ಷಿಕ ಆದಾಯ ಎಷ್ಟು? (ರೂಪಾಯಿಗಳಲ್ಲಿ)",
+        "category": "ನೀವು SC, ST, OBC ಅಥವಾ General?",
+        "bpl":      "ನಿಮ್ಮಲ್ಲಿ BPL ಕಾರ್ಡ್ ಇದೆಯೇ?",
+        "gender":   "ನೀವು ಪುರುಷ ಅಥವಾ ಮಹಿಳೆ?",
+    },
+    "ml": {
+        "state":    "നിങ്ങൾ ഏത് സംസ്ഥാനത്ത് നിന്നാണ്?",
+        "age":      "നിങ്ങളുടെ പ്രായം എത്രയാണ്?",
+        "income":   "നിങ്ങളുടെ വാർഷിക വരുമാനം എത്ര? (രൂപയിൽ)",
+        "category": "നിങ്ങൾ SC, ST, OBC അല്ലെങ്കിൽ General?",
+        "bpl":      "നിങ്ങൾക്ക് BPL കാർഡ് ഉണ്ടോ?",
+        "gender":   "നിങ്ങൾ പുരുഷനോ സ്ത്രീയോ?",
+    },
+    "mr": {
+        "state":    "तुम्ही कोणत्या राज्यातून आहात?",
+        "age":      "तुमचे वय किती आहे?",
+        "income":   "तुमचे वार्षिक उत्पन्न किती आहे? (रुपयांमध्ये)",
+        "category": "तुम्ही SC, ST, OBC की General?",
+        "bpl":      "तुमच्याकडे BPL कार्ड आहे का?",
+        "gender":   "तुम्ही पुरुष आहात की महिला?",
+    },
+    "pa": {
+        "state":    "ਤੁਸੀਂ ਕਿਹੜੇ ਰਾਜ ਤੋਂ ਹੋ?",
+        "age":      "ਤੁਹਾਡੀ ਉਮਰ ਕਿੰਨੀ ਹੈ?",
+        "income":   "ਤੁਹਾਡੀ ਸਾਲਾਨਾ ਆਮਦਨ ਕਿੰਨੀ ਹੈ? (ਰੁਪਏ ਵਿੱਚ)",
+        "category": "ਤੁਸੀਂ SC, ST, OBC ਜਾਂ General?",
+        "bpl":      "ਕੀ ਤੁਹਾਡੇ ਕੋਲ BPL ਕਾਰਡ ਹੈ?",
+        "gender":   "ਤੁਸੀਂ ਮਰਦ ਹੋ ਜਾਂ ਔਰਤ?",
+    },
 }
 
 INTAKE_RETRY = {
@@ -76,6 +139,70 @@ INTAKE_RETRY = {
         "category": "Which category — SC, ST, OBC or General?",
         "bpl":      "Do you have BPL card — yes or no?",
         "gender":   "Are you male or female?",
+    },
+    "bn": {
+        "state":    "অনুগ্রহ করে রাজ্যের নাম বলুন, যেমন ওডিশা, রাজস্থান বা উত্তর প্রদেশ।",
+        "age":      "আপনার বয়স একটি সংখ্যায় বলুন, যেমন ২৫।",
+        "income":   "বার্ষিক আয় টাকায় বলুন, যেমন ৫০০০০ বা ১ লাখ।",
+        "category": "SC, ST, OBC না General — কোন বিভাগ?",
+        "bpl":      "BPL কার্ড আছে কি — হ্যাঁ বা না?",
+        "gender":   "পুরুষ না মহিলা?",
+    },
+    "ta": {
+        "state":    "மாநிலத்தின் பெயரை சொல்லுங்கள், எ.கா. ஒடிஷா, ராஜஸ்தான்.",
+        "age":      "உங்கள் வயதை ஒரு எண்ணில் சொல்லுங்கள், எ.கா. 25.",
+        "income":   "ஆண்டு வருமானம் ரூபாயில் சொல்லுங்கள், எ.கா. 50000 அல்லது 1 லட்சம்.",
+        "category": "SC, ST, OBC அல்லது General — எந்த பிரிவு?",
+        "bpl":      "BPL அட்டை உள்ளதா — ஆம் அல்லது இல்லை?",
+        "gender":   "ஆண் அல்லது பெண்?",
+    },
+    "te": {
+        "state":    "రాష్ట్రం పేరు చెప్పండి, ఉదా. ఒడిశా, రాజస్థాన్.",
+        "age":      "మీ వయస్సు ఒక సంఖ్యలో చెప్పండి, ఉదా. 25.",
+        "income":   "వార్షిక ఆదాయం రూపాయలలో చెప్పండి, ఉదా. 50000 లేదా 1 లక్ష.",
+        "category": "SC, ST, OBC లేదా General — ఏ విభాగం?",
+        "bpl":      "BPL కార్డ్ ఉందా — అవును లేదా కాదు?",
+        "gender":   "పురుషుడా లేదా స్త్రీయా?",
+    },
+    "gu": {
+        "state":    "રાજ્યનું નામ કહો, જેમ કે ઓડિશા, રાજસ્થાન.",
+        "age":      "તમારી ઉંમર એક સંખ્યામાં કહો, જેમ કે 25.",
+        "income":   "વાર્ષિક આવક રૂપિયામાં કહો, જેમ કે 50000 કે 1 લાખ.",
+        "category": "SC, ST, OBC કે General — કઈ શ્રેણી?",
+        "bpl":      "BPL કાર્ડ છે — હા કે ના?",
+        "gender":   "પુરુષ કે સ્ત્રી?",
+    },
+    "kn": {
+        "state":    "ರಾಜ್ಯದ ಹೆಸರು ಹೇಳಿ, ಉದಾ. ಒಡಿಶಾ, ರಾಜಸ್ಥಾನ.",
+        "age":      "ನಿಮ್ಮ ವಯಸ್ಸನ್ನು ಒಂದು ಸಂಖ್ಯೆಯಲ್ಲಿ ಹೇಳಿ, ಉದಾ. 25.",
+        "income":   "ವಾರ್ಷಿಕ ಆದಾಯ ರೂಪಾಯಿಗಳಲ್ಲಿ ಹೇಳಿ, ಉದಾ. 50000 ಅಥವಾ 1 ಲಕ್ಷ.",
+        "category": "SC, ST, OBC ಅಥವಾ General — ಯಾವ ವರ್ಗ?",
+        "bpl":      "BPL ಕಾರ್ಡ್ ಇದೆಯೇ — ಹೌದು ಅಥವಾ ಇಲ್ಲ?",
+        "gender":   "ಪುರುಷ ಅಥವಾ ಮಹಿಳೆ?",
+    },
+    "ml": {
+        "state":    "സംസ്ഥാനത്തിന്റെ പേര് പറയൂ, ഉദാ. ഒഡിഷ, രാജസ്ഥാൻ.",
+        "age":      "നിങ്ങളുടെ പ്രായം ഒരു സംഖ്യയിൽ പറയൂ, ഉദാ. 25.",
+        "income":   "വാർഷിക വരുമാനം രൂപയിൽ പറയൂ, ഉദാ. 50000 അല്ലെങ്കിൽ 1 ലക്ഷം.",
+        "category": "SC, ST, OBC അല്ലെങ്കിൽ General — ഏത് വിഭാഗം?",
+        "bpl":      "BPL കാർഡ് ഉണ്ടോ — അതെ അല്ലെങ്കിൽ ഇല്ല?",
+        "gender":   "പുരുഷൻ അല്ലെങ്കിൽ സ്ത്രീ?",
+    },
+    "mr": {
+        "state":    "राज्याचे नाव सांगा, उदा. ओडिशा, राजस्थान.",
+        "age":      "तुमचे वय एका संख्येत सांगा, उदा. 25.",
+        "income":   "वार्षिक उत्पन्न रुपयांमध्ये सांगा, उदा. 50000 किंवा 1 लाख.",
+        "category": "SC, ST, OBC की General — कोणती श्रेणी?",
+        "bpl":      "BPL कार्ड आहे का — हो किंवा नाही?",
+        "gender":   "पुरुष की महिला?",
+    },
+    "pa": {
+        "state":    "ਰਾਜ ਦਾ ਨਾਮ ਦੱਸੋ, ਜਿਵੇਂ ਕਿ ਓਡੀਸ਼ਾ, ਰਾਜਸਥਾਨ।",
+        "age":      "ਆਪਣੀ ਉਮਰ ਇੱਕ ਸੰਖਿਆ ਵਿੱਚ ਦੱਸੋ, ਜਿਵੇਂ ਕਿ 25।",
+        "income":   "ਸਾਲਾਨਾ ਆਮਦਨ ਰੁਪਏ ਵਿੱਚ ਦੱਸੋ, ਜਿਵੇਂ ਕਿ 50000 ਜਾਂ 1 ਲੱਖ।",
+        "category": "SC, ST, OBC ਜਾਂ General — ਕਿਹੜੀ ਸ਼੍ਰੇਣੀ?",
+        "bpl":      "BPL ਕਾਰਡ ਹੈ — ਹਾਂ ਜਾਂ ਨਹੀਂ?",
+        "gender":   "ਮਰਦ ਜਾਂ ਔਰਤ?",
     },
 }
 
@@ -132,11 +259,6 @@ def _extract_income(message: str) -> Optional[int]:
     nums = re.findall(r'\b(\d{4,7})\b', msg)
     if nums:
         return int(nums[0])
-
-    # 3-digit number could be "500" (hundreds)
-    nums = re.findall(r'\b(\d{3})\b', msg)
-    if nums:
-        return int(nums[0]) * 100
 
     return None
 
@@ -235,6 +357,11 @@ async def chat(req: ChatRequest, request: Request):
     state = session.get("chat_state", "intake")
     language = req.language or session.get("language", "hi")
 
+    # ── Silence timeout sentinel from frontend ────────────────────────────────
+    # Frontend sends __SILENCE_TIMEOUT__ when the 30s inactivity timer fires.
+    if req.message == "__SILENCE_TIMEOUT__":
+        req = req.model_copy(update={"message": "bye"})
+
     # ── Goodbye check ─────────────────────────────────────────────────────────
     if llm.classify_goodbye_intent(req.message):
         summary = await llm.generate_goodbye_summary(session, language)
@@ -317,16 +444,23 @@ async def chat(req: ChatRequest, request: Request):
                         gap_result.get("gap_announcement", "") + " " +
                         gap_result.get("top_3_summary", "")
                     ).strip()
+                    new_state = "match"
                 else:
-                    reply = _get_q("income", language) if not profile.get("income") else (
-                        "आपके प्रोफाइल के अनुसार कोई योजना नहीं मिली। "
-                        "अधिक जानकारी देने पर बेहतर परिणाम मिलेंगे।"
-                        if language == "hi" else
-                        "No schemes found for your profile. Providing more details may help."
-                    )
+                    # Don't say "no schemes" yet if more fields remain to collect
+                    next_field = _next_missing_field(profile)
+                    if next_field:
+                        reply = _get_q(next_field, language)
+                    else:
+                        # All intake fields collected and still no match — now tell user
+                        reply = (
+                            "आपके प्रोफाइल के अनुसार अभी कोई योजना नहीं मिली। "
+                            "थोड़ी देर में फिर कोशिश करें।"
+                            if language == "hi" else
+                            "No schemes found for your profile right now. Please try again shortly."
+                        )
+                    new_state = "intake"
 
                 matched_ids = [s.get("scheme_id") for s in matched if s.get("scheme_id")]
-                new_state = "match" if matched else "intake"
                 db.update_session(req.session_id, {
                     "chat_state": new_state,
                     "profile": profile,
@@ -370,11 +504,8 @@ async def chat(req: ChatRequest, request: Request):
     # ── MATCH STATE ───────────────────────────────────────────────────────────
     elif state == "match":
         matched_ids = session.get("matched_scheme_ids", [])
-        # Use cached matched schemes from session rather than re-embedding
-        try:
-            matched = await _do_scheme_matching(profile, req.session_id, language)
-        except Exception:
-            matched = []
+        # Use cached scheme IDs from session to avoid re-running vector search
+        matched = db.get_schemes_by_ids(matched_ids) if matched_ids else []
 
         scheme = matched[0] if matched else {}
         result = await llm.generate_scheme_guidance(req.message, scheme, language)
@@ -390,10 +521,8 @@ async def chat(req: ChatRequest, request: Request):
 
     # ── GUIDE STATE ───────────────────────────────────────────────────────────
     elif state == "guide":
-        try:
-            matched = await _do_scheme_matching(profile, req.session_id, language)
-        except Exception:
-            matched = []
+        matched_ids = session.get("matched_scheme_ids", [])
+        matched = db.get_schemes_by_ids(matched_ids) if matched_ids else []
         scheme = matched[0] if matched else {}
         result = await llm.generate_scheme_guidance(req.message, scheme, language)
         reply = result.get("reply", "")
