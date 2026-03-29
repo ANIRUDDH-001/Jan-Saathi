@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Jan Saathi — Your Government Schemes Companion',
   description:
     'Talk to Shubh in your language. Discover government schemes, check eligibility, and apply — all through voice.',
-  icons: { icon: '/assets/ved_avatar.jpg' },
+  icons: { icon: '/assets/shubh_avatar_cutout.png' },
   manifest: '/manifest.json',
 };
 

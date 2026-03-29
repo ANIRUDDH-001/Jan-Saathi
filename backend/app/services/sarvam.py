@@ -134,12 +134,11 @@ async def text_to_speech(text: str, language_code: str = "hi-IN") -> str:
                     "Content-Type": "application/json",
                 },
                 json={
-                    "inputs": [trimmed],
+                    "text": trimmed,
                     "target_language_code": language_code,
                     "speaker": speaker,
                     "pace": 1.1,
                     "speech_sample_rate": 22050,
-                    "enable_preprocessing": True,
                     "model": _s.sarvam_tts_model,
                 },
             )

@@ -286,13 +286,14 @@ def _extract_gender(message: str) -> Optional[str]:
 def _extract_category(message: str) -> Optional[str]:
     msg_upper = message.upper()
     words = re.findall(r'\b\w+\b', msg_upper)
-    if "SC" in words:
+    # Hindi spoken variants: "एस सी", "एससी", "एस टी", "ओ बी सी", "जनरल"
+    if "SC" in words or "एस सी" in message or "एससी" in message or "अनुसूचित जाति" in message:
         return "SC"
-    if "ST" in words:
+    if "ST" in words or "एस टी" in message or "एसटी" in message or "अनुसूचित जनजाति" in message:
         return "ST"
-    if "OBC" in words:
+    if "OBC" in words or "ओ बी सी" in message or "ओबीसी" in message or "अन्य पिछड़ा" in message:
         return "OBC"
-    if any(w in words for w in ["GENERAL", "GEN", "SAAMANYA"]) or "सामान्य" in message:
+    if any(w in words for w in ["GENERAL", "GEN", "SAAMANYA"]) or "सामान्य" in message or "जनरल" in message:
         return "General"
     return None
 
@@ -432,6 +433,13 @@ async def chat(req: ChatRequest, request: Request):
             # Also pick up any other fields the user mentioned in the same message
             for k, v in llm_result.items():
                 if v is not None and k != current_field and not profile.get(k):
+                    if k == "age":
+                        try:
+                            age_int = int(v)
+                            if not (10 <= age_int <= 100):
+                                continue
+                        except (TypeError, ValueError):
+                            continue
                     profile[k] = v
             extracted_value = llm_result.get("state")
 
@@ -442,9 +450,25 @@ async def chat(req: ChatRequest, request: Request):
             # Opportunistically pick up other fields mentioned
             for k, v in llm_result.items():
                 if v is not None and k != current_field and not profile.get(k):
+                    if k == "age":
+                        try:
+                            age_int = int(v)
+                            if not (10 <= age_int <= 100):
+                                continue
+                        except (TypeError, ValueError):
+                            continue
                     profile[k] = v
 
         # ── Step 3: Did we get the value? ────────────────────────────────────
+        # Validate age — reject if outside 10–100 (guards against LLM hallucination)
+        if current_field == "age" and extracted_value is not None:
+            try:
+                age_int = int(extracted_value)
+                if not (10 <= age_int <= 100):
+                    extracted_value = None
+            except (TypeError, ValueError):
+                extracted_value = None
+
         if extracted_value is not None:
             profile[current_field] = extracted_value
 
