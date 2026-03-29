@@ -520,13 +520,16 @@ async def chat(req: ChatRequest, request: Request):
                     new_state = "intake"
 
                 matched_ids = [s.get("scheme_id") for s in matched if s.get("scheme_id")]
-                db.update_session(req.session_id, {
-                    "chat_state": new_state,
-                    "profile": profile,
-                    "language": language,
-                    "matched_scheme_ids": matched_ids,
-                    "gap_value": gap_value,
-                })
+                try:
+                    db.update_session(req.session_id, {
+                        "chat_state": new_state,
+                        "profile": profile,
+                        "language": language,
+                        "matched_scheme_ids": matched_ids,
+                        "gap_value": gap_value,
+                    })
+                except Exception as e:
+                    logger.error(f"update_session failed (non-fatal): {e}")
 
                 if matched:
                     try:
