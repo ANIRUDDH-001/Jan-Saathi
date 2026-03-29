@@ -1,4 +1,4 @@
-"""Sarvam AI — STT (Saaras v3) and TTS (Bulbul v3)."""
+"""Sarvam AI — STT (Saaras v3) + TTS (Bulbul v3). Official API: text-to-speech uses 'text' (string)."""
 import logging
 import tempfile
 import os
