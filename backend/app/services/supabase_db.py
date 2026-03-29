@@ -79,18 +79,19 @@ def match_schemes_fallback(
     """
     db = get_db()
     query = db.table("schemes").select(
-        "scheme_id, name_english, name_hindi, level, target_states, benefit_annual_inr, "
-        "has_monetary_benefit, eligibility_summary, spoken_content, demo_ready"
-    ).eq("demo_ready", True)
+        "scheme_id, name_english, name_hindi, level, state, states_applicable, "
+        "benefit_annual_inr, has_monetary_benefit, eligibility_summary, spoken_content, "
+        "form_field_mapping, portal_url, form_pdf_url, helpline_number, demo_ready, is_verified"
+    ).eq("is_verified", True)
 
     if filter_state:
-        # Include state-specific schemes AND central/national schemes
+        # Include state-specific schemes AND national schemes
         query = query.or_(
-            f'target_states.cs.{{"{filter_state}"}},target_states.cs.{{"central"}}'
+            f"state.eq.national,state.eq.{filter_state},states_applicable.cs.{{\"all\"}}"
         )
 
     if filter_occupation:
-        query = query.contains("target_occupation", [filter_occupation])
+        query = query.contains("occupation", [filter_occupation])
 
     r = query.order("benefit_annual_inr", desc=True).limit(match_count).execute()
     return r.data or []

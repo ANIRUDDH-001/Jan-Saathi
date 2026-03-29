@@ -320,19 +320,44 @@ async def _tts(text: str, language: str) -> str:
         return ""
 
 
+_OCCUPATION_SUBTYPE_TO_DB = {
+    "crop_farmer": "farmer",
+    "dairy_farmer": "dairy_farmer",
+    "livestock_farmer": "livestock_farmer",
+    "fisherman": "fisherman",
+}
+
+def _map_occupation(occupation_subtype: str) -> str:
+    """Map chat occupation_subtype values to DB occupation array values."""
+    return _OCCUPATION_SUBTYPE_TO_DB.get(occupation_subtype, "farmer")
+
+
 async def _do_scheme_matching(profile: dict, session_id: str, language: str):
     """Run scheme matching with Cohere vector search, falling back to simple SQL."""
+    raw_occ = profile.get("occupation_subtype", "crop_farmer")
+    db_occupation = _map_occupation(raw_occ)
     try:
         query_embedding = await embed.embed_profile_query(profile, language)
         matched = db.match_schemes(
             query_embedding=query_embedding,
+            match_threshold=0.30,   # Lower threshold for better recall
             filter_state=profile.get("state"),
-            filter_occupation=profile.get("occupation_subtype", "crop_farmer"),
+            filter_occupation=db_occupation,
             filter_income=profile.get("income") if isinstance(profile.get("income"), int) else None,
             filter_bpl=profile.get("bpl"),
             filter_age=profile.get("age") if isinstance(profile.get("age"), int) else None,
         )
         logger.info(f"Vector match returned {len(matched)} schemes for session {session_id}")
+        if not matched:
+            # If vector search returns nothing, try without occupation filter for broader results
+            matched = db.match_schemes(
+                query_embedding=query_embedding,
+                match_threshold=0.25,
+                filter_state=profile.get("state"),
+                filter_income=profile.get("income") if isinstance(profile.get("income"), int) else None,
+                filter_age=profile.get("age") if isinstance(profile.get("age"), int) else None,
+            )
+            logger.info(f"Broader vector match returned {len(matched)} schemes for session {session_id}")
         return matched
     except Exception as e:
         logger.warning(f"Vector search failed ({e}), trying simple fallback for {session_id}")
@@ -340,8 +365,11 @@ async def _do_scheme_matching(profile: dict, session_id: str, language: str):
         try:
             matched = db.match_schemes_fallback(
                 filter_state=profile.get("state"),
-                filter_occupation=profile.get("occupation_subtype", "crop_farmer"),
+                filter_occupation=db_occupation,
             )
+            # Add synthetic similarity for frontend compatibility
+            for s in matched:
+                s.setdefault("similarity", 0.0)
             logger.info(f"Fallback match returned {len(matched)} schemes for session {session_id}")
             return matched
         except Exception as e2:
